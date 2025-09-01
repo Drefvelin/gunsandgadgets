@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <copy file="D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\target/gunsandgadgets-0.0.3-ALPHA.jar" tofile="D:\Dokumenter\My Plugins\TFMC\GunsAndGadgets\gunsandgadgets-0.0.3-ALPHA.jar" />
+  </target>
+</project>

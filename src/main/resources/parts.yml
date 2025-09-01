@@ -1,0 +1,233 @@
+#Barrels
+smoothbore_barrel_long:
+  name: "§7Smoothbore Barrel (Long)"
+  part-type: barrel
+  type:
+    - rifle
+  item: v.iron_ingot
+  stats:
+    - accuracy 5
+    - speed 10
+  caliber:
+    - ironshot
+  name-impact:
+    - Musket 1 10 
+rifled_barrel_long:
+  name: "§7Rifled Barrel (Long)"
+  part-type: barrel
+  type:
+    - rifle
+  item: m.materials.steel_ingot
+  stats:
+    - accuracy 10
+    - speed 8
+    - reload -4
+  caliber:
+    - ironshot
+    - steelshot
+  name-impact:
+    - Rifle 1 10 
+smoothbore_barrel_short:
+  name: "§7Smoothbore Barrel (Short)"
+  part-type: barrel
+  type:
+    - pistol
+  item: v.iron_ingot
+  stats:
+    - accuracy 3
+    - speed 8
+  caliber:
+    - ironshot
+  name-impact:
+    - Pistol 1 10 
+rifled_barrel_short:
+  name: "§7Rifled Barrel (Short)"
+  part-type: barrel
+  type:
+    - pistol
+  item: m.materials.steel_ingot
+  stats:
+    - accuracy 7
+    - speed 7
+    - reload -4
+  caliber:
+    - ironshot
+    - steelshot
+  name-impact:
+    - Pistol 1 10 
+spread_barrel:
+  name: "§7Spread Barrel"
+  part-type: barrel
+  type:
+    - shotgun
+  item: m.materials.steel_ingot
+  stats:
+    - accuracy -4
+    - speed 6
+  caliber:
+    - spreadshot
+  name-impact:
+    - Blunderbuss -1 100
+  skin-impact:
+  - blunderbuss 10
+#Loaders
+muzzle_loader:
+  name: "§7Muzzle Loader"
+  part-type: loader
+  type:
+    - rifle
+    - pistol
+    - shotgun
+  item: v.stone
+  stats:
+    - fire_rate 2
+    - accuracy 4
+    - reload 4
+    - speed 4
+breech_loader:
+  name: "§7Breech Loader"
+  part-type: loader
+  type:
+    - rifle
+    - shotgun
+  item: v.iron_ingot
+  stats:
+    - fire_rate 8
+    - accuracy 2
+    - reload 9
+    - speed 3
+#Chamber
+single_shot:
+  name: "§7Single Shot"
+  part-type: chamber
+  type:
+    - rifle
+    - pistol
+    - shotgun
+  item: v.iron_ingot
+  stats:
+    - capacity 1
+    - reload 2
+    - accuracy 2
+    - speed 3
+revolver:
+  name: "§7Revolver"
+  part-type: chamber
+  type:
+    - rifle
+    - pistol
+  item: v.iron_ingot
+  stats:
+    - capacity 6
+    - fire_rate 6
+    - reload -4
+    - accuracy -1
+    - speed 1
+  name-impact:
+    - (Revolver) 2 10
+
+#Actions
+steamlock:
+  name: "§7Steamlock"
+  part-type: action
+  type:
+    - rifle
+    - pistol
+  item: v.water_bucket
+  caliber-override:
+    - pebbleshot
+  stats:
+    - fire_rate 1
+    - accuracy 1
+    - speed -3
+  name-impact:
+    - Steamlock 0 10
+  skin-impact:
+  - steamlock 10
+matchlock:
+  name: "§7Matchlock"
+  part-type: action
+  type:
+    - rifle
+    - pistol
+    - shotgun
+  item: v.string
+  stats:
+    - fire_rate 5
+    - accuracy 1
+  name-impact:
+    - Matchlock 0 10
+  skin-impact:
+  - matchlock 10
+flintlock:
+  name: "§7Flintlock"
+  part-type: action
+  type:
+    - rifle
+    - pistol
+    - shotgun
+  item: v.flint
+  stats:
+    - fire_rate 7
+    - accuracy 2
+  name-impact:
+    - Flintlock 0 10
+  skin-impact:
+  - flintlock 10
+arclock:
+  name: "§7Expermental Arclock"
+  part-type: action
+  type:
+    - rifle
+  item: m.materials.arcane_crystal
+  stats:
+    - fire_rate 8
+    - accuracy 6
+    - reload -10
+    - speed 8
+  name-impact:
+    - §5Arclock 0 10
+  skin-impact:
+  - arclock 10
+  lore:
+    - "§7Unlike the arclocks used in larger weapons like mounted heavy rifles"
+    - "§7The experimental handheld arclocks are not able to reproduce the rapid"
+    - "§7rate of fire seen in these larger guns. Instead the focus is shifted to"
+    - "§7accuracy and speed at great cost of its manual and long reloading process."
+
+#Stocks
+no_stock:
+  name: "§7No Stock"
+  part-type: stock
+  type:
+    - pistol
+  item: v.barrier
+  stats:
+    - accuray -1
+oak_stock:
+  name: "§7Oak Stock"
+  part-type: stock
+  type:
+    - rifle
+    - shotgun
+  item: v.oak_planks
+  stats:
+    - accuray 3
+maplewood_stock:
+  name: "§7Maplewood Stock"
+  part-type: stock
+  type:
+    - rifle
+    - shotgun
+  item: m.materials.refined_maplewood
+  stats:
+    - accuray 4
+elderwood_stock:
+  name: "§7Maplewood Stock"
+  part-type: stock
+  type:
+    - rifle
+    - shotgun
+  item: m.materials.refined_elderwood
+  stats:
+    - accuray 5

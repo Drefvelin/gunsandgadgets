@@ -1,0 +1,21 @@
+pebbleshot:
+  input: modeled.(type=iron_nugget;name=§7Pebbleshot)
+  stats:
+    - damage 8
+    - accuracy -2
+spreadshot:
+  input: modeled.(type=iron_nugget;name=§7Spreadshot)
+  amount: 12
+  stats:
+    - damage 6
+    - spread 12
+ironshot:
+  input: modeled.(type=iron_nugget;name=§7Ironshot)
+  stats:
+    - damage 10
+    - accuracy -1
+steelshot:
+  input: modeled.(type=iron_nugget;name=§7Steelshot)
+  stats:
+    - damage 16
+    - accuracy 4
