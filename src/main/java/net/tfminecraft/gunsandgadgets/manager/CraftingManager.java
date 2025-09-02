@@ -68,7 +68,7 @@ public class CraftingManager implements Listener {
             ItemStack crafted = inv.createOutputItem(chosenType, parts, false);
 
             // TODO: check costs here before giving item
-            if(!hasInputs(player, parts)) {
+            if(!hasInputs(player, parts) && false) {
                 player.sendMessage("§cLacking inputs");
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return;

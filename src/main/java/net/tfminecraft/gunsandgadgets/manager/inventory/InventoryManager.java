@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -19,6 +20,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import me.Plugins.TLibs.TLibs;
@@ -26,6 +28,8 @@ import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
 import net.tfminecraft.gunsandgadgets.cache.Cache;
 import net.tfminecraft.gunsandgadgets.guns.GunType;
+import net.tfminecraft.gunsandgadgets.guns.SoundType;
+import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
 import net.tfminecraft.gunsandgadgets.guns.parts.GunPart;
 import net.tfminecraft.gunsandgadgets.guns.parts.PartData;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinData;
@@ -33,6 +37,7 @@ import net.tfminecraft.gunsandgadgets.guns.skins.SkinResolver;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinState;
 import net.tfminecraft.gunsandgadgets.guns.stats.StatApplier;
 import net.tfminecraft.gunsandgadgets.guns.stats.Stats;
+import net.tfminecraft.gunsandgadgets.loader.AmmunitionLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartDataLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartLoader;
 import net.tfminecraft.gunsandgadgets.loader.SkinLoader;
@@ -210,7 +215,6 @@ public class InventoryManager implements Listener {
     }
 
     public ItemStack createOutputItem(GunType type, Collection<GunPart> parts, boolean gui) {
-
         // Resolve skin
         SkinResolver resolver = new SkinResolver(SkinLoader.get());
         SkinData skin = resolver.resolve(type, parts);
@@ -226,10 +230,50 @@ public class InventoryManager implements Listener {
             meta.setCustomModelData(skinItem.getItemMeta().getCustomModelData());
             meta.setDisplayName(buildName(parts));
 
-            // ✅ Store skin ID in PDC
-            NamespacedKey skinKey = new NamespacedKey(GunsAndGadgets.getInstance(), "skin_id");
-            meta.getPersistentDataContainer().set(skinKey, PersistentDataType.STRING, skin.getId());
+            PersistentDataContainer pdc = meta.getPersistentDataContainer();
 
+            // ✅ Store skin ID
+            NamespacedKey skinKey = new NamespacedKey(GunsAndGadgets.getInstance(), "skin_id");
+            pdc.set(skinKey, PersistentDataType.STRING, skin.getId());
+
+            NamespacedKey gunKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_id");
+            pdc.set(gunKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+
+            // ✅ Store accuracy salt
+            NamespacedKey saltKey = new NamespacedKey(GunsAndGadgets.getInstance(), "accuracy_salt");
+            int salt = ThreadLocalRandom.current().nextInt(0, 10000);
+            pdc.set(saltKey, PersistentDataType.INTEGER, salt);
+
+            // ---------- Caliber section ----------
+            List<String> calibers = resolveCalibers(parts);
+            List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+
+            if (!calibers.isEmpty()) {
+                lore.add("");
+                lore.add("§6§lCaliber:");
+                for (String ammoKey : calibers) {
+                    Ammunition ammo = AmmunitionLoader.getByString(ammoKey);
+                    if (ammo != null) {
+                        lore.add("§7• " + StringFormatter.getName(
+                            TLibs.getItemAPI().getCreator().getItemFromPath(ammo.getInput())
+                        ));
+                    } else {
+                        lore.add("§7• " + ammoKey);
+                    }
+                }
+
+                // ✅ Save calibers in PDC
+                NamespacedKey calibersKey = new NamespacedKey(GunsAndGadgets.getInstance(), "calibers");
+                pdc.set(calibersKey, PersistentDataType.STRING, String.join(";", calibers));
+            }
+
+            // ---------- Sounds section ----------
+            storeSounds(type, parts, SoundType.SHOOT, pdc,
+                    new NamespacedKey(GunsAndGadgets.getInstance(), "shoot_sounds"));
+            storeSounds(type, parts, SoundType.RELOAD, pdc,
+                    new NamespacedKey(GunsAndGadgets.getInstance(), "reload_sounds"));
+
+            meta.setLore(lore);
             base.setItemMeta(meta);
 
             // Apply stats afterwards (so lore & stat PDCs get written)
@@ -238,6 +282,76 @@ public class InventoryManager implements Listener {
 
         return base;
     }
+
+    /**
+     * Collect sounds for a given type and write them into the PDC.
+     */
+    private void storeSounds(GunType gunType, Collection<GunPart> parts,
+                         SoundType soundType, PersistentDataContainer pdc, NamespacedKey key) {
+        List<String> result = new ArrayList<>();
+        
+        // 🔄 1) Collect ALL overrides first (across all parts)
+        for (GunPart part : parts) {
+            List<GunPart.PartSound> overrides = part.getSoundOverrides().get(soundType);
+            if (overrides != null) {
+                for (GunPart.PartSound ps : overrides) {
+                    if (ps.matches(gunType)) {
+                        String group = String.join(",", ps.getSoundKeys());
+                        if (!group.isBlank()) result.add(group);
+                    }
+                }
+            }
+        }
+
+        // ✅ If we found overrides, they take full priority → skip base sounds
+        if (!result.isEmpty()) {
+            String finalStr = String.join(";", result);
+            pdc.set(key, PersistentDataType.STRING, finalStr);
+            return;
+        }
+
+        // 🎵 2) Otherwise, gather normal sounds
+        for (GunPart part : parts) {
+            List<GunPart.PartSound> base = part.getSounds().get(soundType);
+            if (base != null) {
+                for (GunPart.PartSound ps : base) {
+                    if (ps.matches(gunType)) {
+                        String group = String.join(",", ps.getSoundKeys());
+                        if (!group.isBlank()) result.add(group);
+                    }
+                }
+            }
+        }
+
+        if (!result.isEmpty()) {
+            String finalStr = String.join(";", result);
+            pdc.set(key, PersistentDataType.STRING, finalStr);
+        }
+    }
+
+    /**
+     * Finds the calibers for the selected parts.
+     * If an override is present, uses the last override only.
+     */
+    private List<String> resolveCalibers(Collection<GunPart> parts) {
+        List<String> overrides = new ArrayList<>();
+        List<String> normal = new ArrayList<>();
+
+        for (GunPart part : parts) {
+            if (part.getCaliberOverrides() != null && !part.getCaliberOverrides().isEmpty()) {
+                overrides.addAll(part.getCaliberOverrides());
+            } else if (part.getCalibers() != null && !part.getCalibers().isEmpty()) {
+                normal.addAll(part.getCalibers());
+            }
+        }
+
+        if (!overrides.isEmpty()) {
+            // ✅ Only the last override matters
+            return List.of(overrides.get(overrides.size() - 1));
+        }
+        return normal;
+    }
+
 
 
     public Collection<GunPart> collectPartsForPlayer(Player player, GunType chosen) {

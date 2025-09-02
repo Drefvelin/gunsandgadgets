@@ -62,8 +62,8 @@ spread_barrel:
     - shotgun
   item: m.materials.steel_ingot
   stats:
-    - accuracy -4
-    - speed 6
+    - accuracy -20
+    - speed -5
   caliber:
     - spreadshot
   name-impact:

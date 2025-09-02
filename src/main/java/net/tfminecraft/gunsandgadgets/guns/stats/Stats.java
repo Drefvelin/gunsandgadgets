@@ -7,7 +7,9 @@ public enum Stats {
     FIRE_RATE("fire_rate"),
     CAPACITY("capacity"),
     DAMAGE("damage"),
-    SPREAD("spread");
+    SPREAD("spread"),
+    RANGE("range"),
+    PIERCE("pierce");
 
     private final String key;
 

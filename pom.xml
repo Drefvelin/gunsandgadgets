@@ -6,7 +6,7 @@
 
     <groupId>net.tfminecraft</groupId>
     <artifactId>gunsandgadgets</artifactId>
-    <version>0.0.3-ALPHA</version>
+    <version>0.1.0-BETA</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -40,6 +40,20 @@
             <version>1.0</version>
             <scope>system</scope>
             <systemPath>D:/Dokumenter/My Plugins/TFMC/TLibs/TLibs.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>local</groupId>
+            <artifactId>MMOCore</artifactId>
+            <version>1.13.1</version>
+            <scope>system</scope>
+            <systemPath>D:/Dokumenter/My Plugins/Reference Libs/MMOCore-1.13.1.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>local</groupId>
+            <artifactId>MythicLib</artifactId>
+            <version>1.6.1</version>
+            <scope>system</scope>
+            <systemPath>D:/Dokumenter/My Plugins/Reference Libs/MythicLib-1.7.jar</systemPath>
         </dependency>
     </dependencies>
 

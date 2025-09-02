@@ -5,6 +5,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 import net.tfminecraft.gunsandgadgets.guns.GunType;
+import net.tfminecraft.gunsandgadgets.guns.SoundType;
 import net.tfminecraft.gunsandgadgets.guns.stats.Stats;
 import net.tfminecraft.gunsandgadgets.loader.PartDataLoader;
 
@@ -19,6 +20,9 @@ public class GunPart {
     private final List<String> calibers;
     private List<String> caliberOverrides;
     private List<String> lore = new ArrayList<>();
+
+    private final Map<SoundType, List<PartSound>> sounds = new HashMap<>();
+    private final Map<SoundType, List<PartSound>> soundOverrides = new HashMap<>();
 
     private final Map<String, Integer> cost = new HashMap<>();
 
@@ -116,7 +120,54 @@ public class GunPart {
                 }
             }
         }
+        
+        // Parse normal sounds
+        parseSoundSection(config.getStringList("sounds"), sounds);
+
+        // Parse overrides
+        parseSoundSection(config.getStringList("sound-overrides"), soundOverrides);
     }
+
+    private void parseSoundSection(List<String> entries, Map<SoundType, List<PartSound>> target) {
+        for (String s : entries) {
+            String[] split = s.split(" ", 2);
+            if (split.length < 2) continue;
+
+            SoundType type;
+            try {
+                type = SoundType.valueOf(split[0].toUpperCase());
+            } catch (IllegalArgumentException ex) {
+                System.out.println("Invalid sound type for part " + id + ": " + split[0]);
+                continue;
+            }
+
+            String raw = split[1].trim();
+            String soundKeys = raw;
+            GunType requiredType = null;
+
+            if (raw.contains("(") && raw.endsWith(")")) {
+                int start = raw.indexOf("(");
+                int end = raw.lastIndexOf(")");
+                soundKeys = raw.substring(0, start);
+                String typeStr = raw.substring(start + 1, end);
+
+                try {
+                    requiredType = GunType.valueOf(typeStr.toUpperCase());
+                } catch (Exception e) {
+                    System.out.println("Invalid gun type for sound in part " + id + ": " + typeStr);
+                }
+            }
+
+            List<String> keys = Arrays.stream(soundKeys.split(","))
+                    .map(String::trim)
+                    .filter(k -> !k.isEmpty())
+                    .toList();
+
+            target.computeIfAbsent(type, t -> new ArrayList<>())
+                .add(new PartSound(keys, requiredType));
+        }
+    }
+
 
     // Getters
     public String getId() { return id; }
@@ -129,13 +180,12 @@ public class GunPart {
     public List<String> getCaliberOverrides() { return caliberOverrides; }
     public List<String> getLore() { return lore; }
     public Set<GunType> getGunTypes() { return gunTypes; }
-
     public Map<String, Integer> getCost() { return cost; }
     public boolean hasCost() { return cost.size() > 0; }
-
-    // NEW
     public List<NameImpact> getNameImpacts() { return nameImpacts; }
     public List<SkinImpact> getSkinImpacts() { return skinImpacts; }
+    public Map<SoundType, List<PartSound>> getSounds() { return sounds; }
+    public Map<SoundType, List<PartSound>> getSoundOverrides() { return soundOverrides; }
 
     // Inner class for name-impact
     public static class NameImpact {
@@ -167,4 +217,27 @@ public class GunPart {
         public int getWeight() { return weight; }
     }
 
+    public static class PartSound {
+        private final List<String> soundKeys; // multiple options
+        private final GunType requiredType; // may be null
+
+        public PartSound(List<String> soundKeys, GunType requiredType) {
+            this.soundKeys = soundKeys;
+            this.requiredType = requiredType;
+        }
+
+        public GunType getRequiredType() { return requiredType; }
+
+        public boolean matches(GunType type) {
+            return requiredType == null || requiredType == type;
+        }
+
+        public List<String> getSoundKeys() { return soundKeys; }
+
+        /** Pick one random key */
+        public String pickRandomKey(Random rand) {
+            if (soundKeys.isEmpty()) return null;
+            return soundKeys.get(rand.nextInt(soundKeys.size()));
+        }
+    }
 }

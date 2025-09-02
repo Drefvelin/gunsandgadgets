@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.tfminecraft.gunsandgadgets.loader.AmmunitionLoader;
 import net.tfminecraft.gunsandgadgets.loader.ConfigLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartDataLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartLoader;
@@ -18,6 +19,7 @@ public class GunsAndGadgets extends JavaPlugin{
     private final PartLoader partLoader = new PartLoader();
     private final PartDataLoader partDataLoader = new PartDataLoader();
     private final SkinLoader skinLoader = new SkinLoader();
+    private final AmmunitionLoader ammunitionLoader = new AmmunitionLoader();
 
     private final CraftingManager craftingManager = new CraftingManager();
 
@@ -50,7 +52,8 @@ public class GunsAndGadgets extends JavaPlugin{
 				"config.yml",
                 "part-types.yml",
                 "parts.yml",
-                "skins.yml"
+                "skins.yml",
+                "ammunition.yml"
 				};
 		for(String s : files) {
 			File newConfigFile = new File(getDataFolder(), s);
@@ -63,6 +66,7 @@ public class GunsAndGadgets extends JavaPlugin{
 
     public void loadConfigs() {
 		configLoader.loadConfig(new File(getDataFolder(), "config.yml"));
+        ammunitionLoader.load(new File(getDataFolder(), "ammunition.yml"));
         partDataLoader.load(new File(getDataFolder(), "part-types.yml"));
         partLoader.load(new File(getDataFolder(), "parts.yml"));
         skinLoader.load(new File(getDataFolder(), "skins.yml"));

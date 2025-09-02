@@ -6,10 +6,12 @@ D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfmin
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\skins\SkinData.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\skins\SkinResolver.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\skins\SkinState.java
+D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\SoundType.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\stats\StatApplier.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\stats\StatCalculator.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\guns\stats\Stats.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\GunsAndGadgets.java
+D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\loader\AmmunitionLoader.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\loader\ConfigLoader.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\loader\PartDataLoader.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\loader\PartLoader.java
@@ -22,4 +24,7 @@ D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfmin
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\manager\inventory\SelectedPartsManager.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\manager\inventory\TypeSelectionHolder.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\manager\inventory\TypeSelectionManager.java
+D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\shooter\ProjectileShooter.java
+D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\util\Caliber.java
 D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\util\CostFormatter.java
+D:\Dokumenter\My Plugins\VSCode Workspace\gunsandgadgets\src\main\java\net\tfminecraft\gunsandgadgets\util\SoundPlayer.java
