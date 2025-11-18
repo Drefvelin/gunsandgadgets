@@ -33,15 +33,14 @@ public class CraftingManager implements Listener {
      * Listens for right–clicks on End Portal Frames
      */
     @EventHandler
-    public void onPortalFrameClick(PlayerInteractEvent event) {
+    public void onStationOpen(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getClickedBlock() == null) return;
 
-        if (event.getClickedBlock().getType() == Material.END_PORTAL_FRAME) {
-            event.setCancelled(true);
-            Player player = event.getPlayer();
-            inv.openCraftingInventory(player);
-        }
+        if(!TLibs.getBlockAPI().getChecker().checkBlock(event.getClickedBlock(), Cache.station)) return;
+        event.setCancelled(true);
+        Player player = event.getPlayer();
+        inv.openCraftingInventory(player);
     }
 
     @EventHandler
@@ -58,6 +57,7 @@ public class CraftingManager implements Listener {
 
             // Only output slot is craftable
             if (e.getSlot() != Cache.outputSlot) return;
+            if(current.getType().equals(Material.BARRIER)) return;
 
             // Collect parts again (based on player’s selections)
             GunType chosenType = TypeSelectionManager.getSelectedType(player);
@@ -67,12 +67,13 @@ public class CraftingManager implements Listener {
             // Rebuild the final item (no GUI lines)
             ItemStack crafted = inv.createOutputItem(chosenType, parts, false);
 
-            // TODO: check costs here before giving item
-            if(!hasInputs(player, parts) && false) {
+            if(!hasInputs(player, parts)) {
                 player.sendMessage("§cLacking inputs");
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                 return;
             }
+
+            if(!player.hasPermission("gg.bypass_crafting_cost")) takeInputs(player, parts);
 
             // Give to player
             player.getInventory().addItem(crafted);
@@ -85,6 +86,7 @@ public class CraftingManager implements Listener {
     }
 
     private boolean hasInputs(Player p, Collection<GunPart> parts) {
+        if(p.hasPermission("gg.bypass_crafting_cost")) return true;
         Map<String, Integer> costs = new HashMap<>();
 
         // Collect total costs
@@ -110,5 +112,36 @@ public class CraftingManager implements Listener {
 
         // ✅ Check if all requirements satisfied
         return costs.values().stream().allMatch(v -> v <= 0);
+    }
+
+    private void takeInputs(Player p, Collection<GunPart> parts) {
+        Map<String, Integer> costs = new HashMap<>();
+
+        // Collect total costs for all parts
+        for (GunPart part : parts) {
+            if (!part.hasCost()) continue;
+            for (Map.Entry<String, Integer> entry : part.getCost().entrySet()) {
+                costs.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+        }
+
+        // Remove items from inventory
+        for (Map.Entry<String, Integer> entry : costs.entrySet()) {
+            int toRemove = entry.getValue();
+
+            for (ItemStack item : p.getInventory().getContents()) {
+                if (item == null) continue;
+
+                if (TLibs.getItemAPI().getChecker().checkItemWithPath(item, entry.getKey())) {
+                    int remove = Math.min(item.getAmount(), toRemove);
+                    item.setAmount(item.getAmount() - remove);
+                    toRemove -= remove;
+
+                    if (toRemove <= 0) break;
+                }
+            }
+        }
+
+        p.updateInventory();
     }
 }

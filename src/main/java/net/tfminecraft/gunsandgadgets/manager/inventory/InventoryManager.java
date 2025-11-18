@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -23,8 +25,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import io.lumine.mythic.lib.api.item.NBTItem;
 import me.Plugins.TLibs.TLibs;
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
+import net.Indyuce.mmoitems.ItemStats;
+import net.Indyuce.mmoitems.api.item.mmoitem.LiveMMOItem;
+import net.Indyuce.mmoitems.stat.data.StringListData;
+import net.Indyuce.mmoitems.stat.type.StatHistory;
 import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
 import net.tfminecraft.gunsandgadgets.cache.Cache;
 import net.tfminecraft.gunsandgadgets.guns.GunType;
@@ -69,7 +76,17 @@ public class InventoryManager implements Listener {
             if (part != null) {
                 parts.add(part);
                 inv.setItem(slot, createPartItem(part));
+            } else {
+                // ❌ No valid part (permission or none exist) → barrier
+                ItemStack barrier = new ItemStack(Material.BARRIER);
+                ItemMeta bm = barrier.getItemMeta();
+                if (bm != null) {
+                    bm.setDisplayName("§cNo Part");
+                    barrier.setItemMeta(bm);
+                }
+                inv.setItem(slot, barrier);
             }
+
         }
 
         inv.setItem(Cache.outputSlot, createOutputItem(chosen, parts, true));
@@ -103,24 +120,35 @@ public class InventoryManager implements Listener {
         for (GunPart part : PartLoader.getOrdered()) {
             if (!part.getPartType().getId().equalsIgnoreCase(partCategoryId)) continue;
             if (!part.getGunTypes().contains(chosen)) continue;
+            if (!hasPermissionForPart(player, part)) continue; // 🚫 permission check
             options.add(part);
         }
 
         int size = Math.max(9, Math.min(54, ((options.size() + 8) / 9) * 9));
         Inventory inv = Bukkit.createInventory(new PartSelectionHolder(partCategoryId), size, "§6Select " + partCategoryId);
 
-        for (GunPart part : options) {
-            ItemStack option = createPartItem(part); // pretty preview
-            // store the part key for retrieval on click (use localizedName for simplicity)
-            ItemMeta meta = option.getItemMeta();
-            if (meta != null) {
-                meta.setLocalizedName(part.getId()); // safe hidden id
-                option.setItemMeta(meta);
+        if (options.isEmpty()) {
+            // ❌ No available parts → show barrier
+            ItemStack barrier = new ItemStack(Material.BARRIER);
+            ItemMeta bm = barrier.getItemMeta();
+            if (bm != null) {
+                bm.setDisplayName("§cNo Part");
+                barrier.setItemMeta(bm);
             }
-            inv.addItem(option);
+            inv.setItem(size / 2, barrier);
+        } else {
+            for (GunPart part : options) {
+                ItemStack option = createPartItem(part);
+                ItemMeta meta = option.getItemMeta();
+                if (meta != null) {
+                    meta.setLocalizedName(part.getId());
+                    option.setItemMeta(meta);
+                }
+                inv.addItem(option);
+            }
         }
 
-        // optional: back button (last slot)
+        // optional: back button
         ItemStack back = new ItemStack(Material.ARROW);
         ItemMeta bm = back.getItemMeta();
         if (bm != null) { bm.setDisplayName("§eBack"); back.setItemMeta(bm); }
@@ -129,18 +157,19 @@ public class InventoryManager implements Listener {
         player.openInventory(inv);
     }
 
+
     // ---------- HELPERS ----------
     private GunPart getSelectedOrFirstPart(String partCategoryId, GunType chosen, Player player) {
         String selectedKey = SelectedPartsManager.get(player, partCategoryId);
         if (selectedKey != null) {
             GunPart gp = getPartByKey(selectedKey);
-            if (gp != null && gp.getGunTypes().contains(chosen)) {
-                // just return the selection if it exists & is valid for this gun type
+            if (gp != null && gp.getGunTypes().contains(chosen) && hasPermissionForPart(player, gp)) {
                 return gp;
             }
         }
-        return getFirstPartOfType(partCategoryId, chosen);
+        return getFirstPartOfType(partCategoryId, chosen, player);
     }
+
 
 
     private GunPart getPartByKey(String key) {
@@ -154,13 +183,16 @@ public class InventoryManager implements Listener {
         return null;
     }
 
-    private GunPart getFirstPartOfType(String id, GunType chosen) {
+    private GunPart getFirstPartOfType(String id, GunType chosen, Player player) {
         for (GunPart part : PartLoader.getOrdered()) {
             if (!part.getGunTypes().contains(chosen)) continue;
-            if (part.getPartType().getId().equalsIgnoreCase(id)) return part;
+            if (!part.getPartType().getId().equalsIgnoreCase(id)) continue;
+            if (!hasPermissionForPart(player, part)) continue;
+            return part;
         }
-        return null;
+        return null; // ❌ none available
     }
+
 
     private String getPartIdForSlot(int slot) {
         for (PartData data : PartDataLoader.get().values()) {
@@ -214,13 +246,65 @@ public class InventoryManager implements Listener {
         return sb.toString().trim();
     }
 
+    private ItemStack applyClass(ItemStack item, Collection<GunPart> parts) {
+        // Use a set to avoid duplicates
+        Set<String> classes = new HashSet<>();
+        for (GunPart part : parts) {
+            classes.addAll(part.getClassRequirements());
+        }
+
+        if (NBTItem.get(item).hasType() && !classes.isEmpty()) {
+            LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(item));
+
+            // Convert back to list for MMOItems data
+            StringListData data = new StringListData(new ArrayList<>(classes));
+
+            StatHistory hist = StatHistory.from(mmo, ItemStats.REQUIRED_CLASS);
+            if (hist != null) {
+                StringListData og = (StringListData) hist.getOriginalData();
+                og.getList().clear();
+                og.mergeWith(data);
+                mmo.setStatHistory(ItemStats.REQUIRED_CLASS, hist);
+            }
+
+            return mmo.newBuilder().build();
+        }
+        return item;
+    }
+
+
     public ItemStack createOutputItem(GunType type, Collection<GunPart> parts, boolean gui) {
+        List<String> required = Cache.requiredParts.get(type);
+        if (required != null) {
+            for (String req : required) {
+                boolean found = false;
+                for (GunPart part : parts) {
+                    if (part.getPartType().getId().equalsIgnoreCase(req)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // ❌ Missing at least one part → return barrier
+                    ItemStack barrier = new ItemStack(Material.BARRIER);
+                    ItemMeta bm = barrier.getItemMeta();
+                    if (bm != null) {
+                        bm.setDisplayName("§cNot enough parts");
+                        barrier.setItemMeta(bm);
+                    }
+                    return barrier;
+                }
+            }
+        }
         // Resolve skin
         SkinResolver resolver = new SkinResolver(SkinLoader.get());
         SkinData skin = resolver.resolve(type, parts);
 
         // Base item
-        ItemStack base = TLibs.getItemAPI().getCreator().getItemFromPath(Cache.outputItem);
+        ItemStack base = TLibs.getItemAPI().getCreator().getItemFromPath(Cache.outputItems.getOrDefault(type, "v.stick"));
+        
+        base = applyClass(base, parts);
+
         ItemStack skinItem = skin.parseModel(SkinState.CARRY);
         base.setType(skinItem.getType());
 
@@ -238,6 +322,9 @@ public class InventoryManager implements Listener {
 
             NamespacedKey gunKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_id");
             pdc.set(gunKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+
+            NamespacedKey typeKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_type");
+            pdc.set(typeKey, PersistentDataType.STRING, type.toString());
 
             // ✅ Store accuracy salt
             NamespacedKey saltKey = new NamespacedKey(GunsAndGadgets.getInstance(), "accuracy_salt");
@@ -443,6 +530,7 @@ public class InventoryManager implements Listener {
 
             ItemStack current = event.getCurrentItem();
             if (current != null && current.getType() == Material.GRAY_STAINED_GLASS_PANE) return;
+            if(current.getType().equals(Material.BARRIER)) return;
             if(event.getSlot() == Cache.outputSlot) return;
             // slot 0 -> choose gun type
             if (event.getSlot() == 0) {
@@ -510,5 +598,13 @@ public class InventoryManager implements Listener {
             openCraftingInventory(player);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 1f);
         }
+    }
+
+    private boolean hasPermissionForPart(Player player, GunPart part) {
+        if (part.getPermissions() == null || part.getPermissions().isEmpty()) return true;
+        for (String perm : part.getPermissions()) {
+            if (player.hasPermission(perm)) return true;
+        }
+        return false;
     }
 }

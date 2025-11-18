@@ -38,20 +38,12 @@ public class SoundPlayer {
                 if (chosen.isEmpty()) continue;
 
                 playedAny = true;
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (p.getWorld().equals(loc.getWorld())) {
-                        p.playSound(loc, chosen, SoundCategory.PLAYERS, 1f, 1f);
-                    }
-                }
+                loc.getWorld().playSound(loc, chosen, SoundCategory.PLAYERS, volume, 1f);
             }
         }
 
         if (!playedAny && fallback) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.getWorld().equals(loc.getWorld())) {
-                    p.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, volume, 1.2f);
-                }
-            }
+            loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, volume, 1.2f);
         }
     }
 }

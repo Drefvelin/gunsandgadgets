@@ -1,6 +1,12 @@
 package net.tfminecraft.gunsandgadgets.manager;
 
+import net.Indyuce.mmocore.api.player.PlayerData;
+import net.Indyuce.mmoitems.ItemStats;
+import net.Indyuce.mmoitems.api.event.item.UntargetedWeaponUseEvent;
+import net.Indyuce.mmoitems.api.item.mmoitem.LiveMMOItem;
+import net.Indyuce.mmoitems.stat.data.StringListData;
 import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
+import net.tfminecraft.gunsandgadgets.attributes.AttributeReader;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
 import net.tfminecraft.gunsandgadgets.guns.parts.GunPart;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinData;
@@ -22,10 +28,15 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
@@ -35,6 +46,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import io.lumine.mythic.lib.api.item.NBTItem;
 import me.Plugins.TLibs.TLibs;
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 
@@ -42,6 +54,7 @@ public class GunManager implements Listener {
 
     private final NamespacedKey skinKey = new NamespacedKey(GunsAndGadgets.getInstance(), "skin_id");
     private final NamespacedKey gunKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_id");
+    private final NamespacedKey typeKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_type");
 
     private final NamespacedKey bulletsKey = new NamespacedKey(GunsAndGadgets.getInstance(), "bullets_loaded");
     private final NamespacedKey capacityKey = new NamespacedKey(GunsAndGadgets.getInstance(), "stat_value_capacity");
@@ -57,22 +70,75 @@ public class GunManager implements Listener {
     private final Map<UUID, Boolean> reloading = new HashMap<>();
 
     @EventHandler
+    public void preventOldMuskets(UntargetedWeaponUseEvent e) {
+        if(e.getWeapon().getNBTItem().getType().equalsIgnoreCase("MUSKETS")) e.setCancelled(true);
+    }
+
+    @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (!(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) return;
-        ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
+
+        // skip interactable blocks like chests, doors, etc.
+        if (event.getClickedBlock() != null && event.getClickedBlock().getType().isInteractable()) {
+            return;
+        }
+
+        handleGunUse(event.getPlayer(), event); // your gun logic
+    }
+
+    @EventHandler
+    public void onEntityInteract(PlayerInteractEntityEvent event) {
+        if (event.getRightClicked() instanceof ItemFrame) {
+            return; // allow placing guns in frames
+        }
+
+        handleGunUse(event.getPlayer(), event); // your gun logic
+    }
+
+    private boolean checkClass(Player p, ItemStack gun) {
+        if(p.hasPermission("gg.bypass_class")) return true;
+        if(!NBTItem.get(gun).hasType()) return true;
+        LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(gun));
+        StringListData data = (StringListData) mmo.getData(ItemStats.REQUIRED_CLASS);
+        if(data == null) return true;
+        PlayerData pd = PlayerData.get(p.getUniqueId());
+        for(String s : data.getList()) {
+            if(pd.getProfess().getId().equalsIgnoreCase(s)) return true;
+        }
+        return false;
+    }
+
+    public void handleGunUse(Player player, Cancellable event) {
+        //quick offhand check just cancel
+        ItemStack item = player.getInventory().getItemInOffHand();
+        if(item != null) {
+            if (item.hasItemMeta()) {
+                ItemMeta meta = item.getItemMeta();
+                String skinId = meta.getPersistentDataContainer().get(skinKey, PersistentDataType.STRING);
+                if (skinId != null) {
+                    event.setCancelled(true);;
+                }
+            }
+        }
+        
+        
+        item = player.getInventory().getItemInMainHand();
         if(item == null) return;
         if (!item.hasItemMeta()) return;
 
-        Player player = event.getPlayer();
         UUID id = player.getUniqueId();
 
         ItemMeta meta = item.getItemMeta();
         String skinId = meta.getPersistentDataContainer().get(skinKey, PersistentDataType.STRING);
         if (skinId == null) {
-            reloading.remove(id);
+            return;
+        }
+        String gunId = meta.getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
+        if (gunId == null) {
             return;
         }
         event.setCancelled(true);
+        if(!checkClass(player, item)) return;
         // ✅ Block duplicate reloads
         if (reloading.getOrDefault(id, false)) {
             return;
@@ -116,6 +182,7 @@ public class GunManager implements Listener {
             Ammunition ammo = AmmunitionLoader.getByString(ammoId);
             if (ammo != null) {
                 ProjectileShooter.shoot(player, item, ammo); // pass ammo in
+                unloadSame(player, item);
             }
 
             if (bullets <= 0) {
@@ -168,11 +235,8 @@ public class GunManager implements Listener {
         int reloadStat = meta.getPersistentDataContainer()
                 .getOrDefault(new NamespacedKey(GunsAndGadgets.getInstance(), "stat_value_reload"),
                         PersistentDataType.INTEGER, 0);
-        int accuracyStat = meta.getPersistentDataContainer()
-                .getOrDefault(new NamespacedKey(GunsAndGadgets.getInstance(), "stat_value_accuracy"),
-                        PersistentDataType.INTEGER, 0);
 
-        int reloadTicks = StatCalculator.calculateReloadTicks(reloadStat);
+        int reloadTicks = (int) Math.round(StatCalculator.calculateReloadTicks(reloadStat)*AttributeReader.getReloadReductionMultFromAttributes(player));
 
         // Switch to reload model
         item.setItemMeta(meta);
@@ -191,12 +255,19 @@ public class GunManager implements Listener {
             @Override
             public void run() {
                 ItemStack current = player.getInventory().getItemInMainHand();
-                if (!reloading.containsKey(player.getUniqueId())) {
+                if (!reloading.containsKey(player.getUniqueId()) || current == null || current.getItemMeta() == null) {
                     cancel();
                     return;
                 }
 
-                double progress = (double) tick / reloadTicks;
+                String currentId = current.getItemMeta().getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
+                if(currentId == null || currentId != gunId) {
+                    reloading.remove(player.getUniqueId());
+                    cancel();
+                    return;
+                }
+
+                double progress = (double) tick / (reloadTicks - 1);
                 String bar = makeProgressBar(progress, 10, "§7", "§f");
                 player.sendTitle("", bar, 0, 5, 0);
                 // 📍 Check movement since last tick
@@ -244,7 +315,7 @@ public class GunManager implements Listener {
                         chargeCrossbow(player.getInventory().getItemInMainHand(), loadedAmmo, loaded);
                     }
 
-
+                    /*
                     double spread = StatCalculator.calculateAccuracy(accuracyStat);
                     player.sendMessage("§7Accuracy: §e" + String.format("%.2f° spread", spread));
 
@@ -256,12 +327,70 @@ public class GunManager implements Listener {
                     player.sendMessage("§7Fire Rate: §e" + cooldown);
 
                     //player.playSound(player.getLocation(), Sound.BLOCK_LEVER_CLICK, 1f, 1f);
+                    */
                     reloading.remove(id);
                     cancel();
                 }
             }
         }.runTaskTimer(GunsAndGadgets.getInstance(), 0L, 1L);
 
+    }
+
+    private void unloadSame(Player p, ItemStack gun) {
+        if(gun == null) return;
+        ItemMeta meta = gun.getItemMeta();
+        if(meta == null) return;
+        String gunId = meta.getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
+        if (gunId == null) {
+            return;
+        }
+        String gunType = meta.getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
+        for(ItemStack i : p.getInventory().getContents()) {
+            if(i == null) continue;
+            ItemMeta m = i.getItemMeta();
+            if(m == null) continue;
+            String id = m.getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
+            if (id == null) {
+                continue;
+            }
+            if(id.equalsIgnoreCase(gunId)) continue;
+            String type = m.getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
+            if(!type.equalsIgnoreCase(gunType)) continue;
+            int bullets = m.getPersistentDataContainer()
+                .getOrDefault(bulletsKey, PersistentDataType.INTEGER, 0);
+            if(bullets == 0) continue;
+            m.getPersistentDataContainer().remove(loadedAmmoKey);
+            m.getPersistentDataContainer().remove(bulletsKey);
+            i.setItemMeta(m);
+            String skinId = m.getPersistentDataContainer().get(skinKey, PersistentDataType.STRING);
+            if (skinId == null) {
+                continue;
+            }
+
+            SkinData skin = SkinLoader.get().get(skinId);
+            if (skin == null) continue;
+           
+            applyModel(i, skin, SkinState.CARRY);
+
+            // Clear arrow if crossbow
+            if (i.getType() == Material.CROSSBOW) {
+                CrossbowMeta cbMeta = (CrossbowMeta) i.getItemMeta();
+                cbMeta.setChargedProjectiles(new ArrayList<>());
+                i.setItemMeta(cbMeta);
+            }
+            String ammoId = m.getPersistentDataContainer().get(loadedAmmoKey, PersistentDataType.STRING);
+
+            if (ammoId != null && bullets > 0) {
+                // Refund ammo
+                Ammunition ammo = AmmunitionLoader.getByString(ammoId);
+                if(ammo != null) {
+                    ItemStack refund = TLibs.getItemAPI().getCreator().getItemFromPath(ammo.getInput());
+                    refund.setAmount(bullets);
+                    p.getInventory().addItem(refund);
+                }
+            }
+            p.updateInventory();
+        }
     }
 
     @EventHandler
@@ -307,8 +436,9 @@ public class GunManager implements Listener {
         }
     }
 
+    
 
-    private ItemStack applyModel(ItemStack i, SkinData data, SkinState state) {
+    public ItemStack applyModel(ItemStack i, SkinData data, SkinState state) {
         ItemStack skin = data.parseModel(state);
         ItemMeta m = i.getItemMeta();
         m.setCustomModelData(skin.getItemMeta().getCustomModelData());
@@ -334,17 +464,62 @@ public class GunManager implements Listener {
         crossbow.setItemMeta(cbMeta);
     }
 
+    @EventHandler
+    public void onDrop(PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        UUID id = player.getUniqueId();
+
+        if (reloading.containsKey(id) && reloading.get(id)) {
+            // prevent dropping the gun in hand while reloading
+            ItemStack dropped = event.getItemDrop().getItemStack();
+            if (dropped != null && dropped.hasItemMeta()) {
+                ItemMeta meta = dropped.getItemMeta();
+                if (meta.getPersistentDataContainer().has(gunKey, PersistentDataType.STRING)) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        UUID id = player.getUniqueId();
+
+        if (reloading.containsKey(id) && reloading.get(id)) {
+            ItemStack current = event.getCurrentItem();
+            ItemStack cursor = event.getCursor();
+
+            // Check clicked or cursor item for a gun
+            if ((current != null && current.hasItemMeta() &&
+                current.getItemMeta().getPersistentDataContainer().has(gunKey, PersistentDataType.STRING))
+            || (cursor != null && cursor.hasItemMeta() &&
+                cursor.getItemMeta().getPersistentDataContainer().has(gunKey, PersistentDataType.STRING))) {
+
+                event.setCancelled(true);
+            }
+        }
+    }
 
     /** Progress bar helper */
     private String makeProgressBar(double progress, int bars, String filled, String empty) {
+        // Clamp progress between 0.0 and 1.0
+        progress = Math.max(0.0, Math.min(1.0, progress));
+
         int filledBars = (int) Math.round(progress * bars);
-        StringBuilder sb = new StringBuilder("");
+
+        // Ensure that 100% progress always fills all bars
+        if (progress >= 1.0) {
+            filledBars = bars;
+        }
+
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < bars; i++) {
             sb.append(i < filledBars ? filled + "|" : empty + "|");
         }
-        sb.append("");
         return sb.toString();
     }
+
 
     /**
      * Try to take ammo from the player's inventory.

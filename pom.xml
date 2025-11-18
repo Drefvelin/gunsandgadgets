@@ -6,7 +6,7 @@
 
     <groupId>net.tfminecraft</groupId>
     <artifactId>gunsandgadgets</artifactId>
-    <version>0.1.0-BETA</version>
+    <version>1.0.1</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -50,10 +50,24 @@
         </dependency>
         <dependency>
             <groupId>local</groupId>
+            <artifactId>MMOItems</artifactId>
+            <version>6.10.1</version>
+            <scope>system</scope>
+            <systemPath>D:/Dokumenter/My Plugins/Reference Libs/MMOItems-6.10.1-20250521.175300-22.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>local</groupId>
             <artifactId>MythicLib</artifactId>
             <version>1.6.1</version>
             <scope>system</scope>
             <systemPath>D:/Dokumenter/My Plugins/Reference Libs/MythicLib-1.7.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>local</groupId>
+            <artifactId>VehicleFramework</artifactId>
+            <version>0.8.1</version>
+            <scope>system</scope>
+            <systemPath>D:/Dokumenter/My Plugins/TFMC/VehicleFramework/vehicleframework-0.8.1-BETA.jar</systemPath>
         </dependency>
     </dependencies>
 

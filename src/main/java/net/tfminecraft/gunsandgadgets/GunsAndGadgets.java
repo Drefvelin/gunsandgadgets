@@ -1,9 +1,11 @@
 package net.tfminecraft.gunsandgadgets;
 
 import java.io.File;
+import java.util.HashMap;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.tfminecraft.gunsandgadgets.guns.skins.SkinData;
 import net.tfminecraft.gunsandgadgets.loader.AmmunitionLoader;
 import net.tfminecraft.gunsandgadgets.loader.ConfigLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartDataLoader;
@@ -22,10 +24,12 @@ public class GunsAndGadgets extends JavaPlugin{
     private final AmmunitionLoader ammunitionLoader = new AmmunitionLoader();
 
     private final CraftingManager craftingManager = new CraftingManager();
+    private GunManager gunManager;
 
     @Override
     public void onEnable() {
         instance = this;
+        gunManager = new GunManager();
         createConfigs();
         loadConfigs();
         registerListeners();
@@ -40,7 +44,7 @@ public class GunsAndGadgets extends JavaPlugin{
     public void registerListeners() {
 		getServer().getPluginManager().registerEvents(craftingManager, this);
         getServer().getPluginManager().registerEvents(new InventoryManager(), this);
-        getServer().getPluginManager().registerEvents(new GunManager(), this);
+        getServer().getPluginManager().registerEvents(gunManager, this);
 	}
 
     public static GunsAndGadgets getInstance() {
@@ -71,4 +75,8 @@ public class GunsAndGadgets extends JavaPlugin{
         partLoader.load(new File(getDataFolder(), "parts.yml"));
         skinLoader.load(new File(getDataFolder(), "skins.yml"));
 	}
+
+    public GunManager getGunManager() { return gunManager; }
+
+    public SkinData getSkin(String id) { return SkinLoader.getByString(id); }
 }

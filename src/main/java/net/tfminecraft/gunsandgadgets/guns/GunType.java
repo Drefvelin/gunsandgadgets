@@ -3,7 +3,8 @@ package net.tfminecraft.gunsandgadgets.guns;
 public enum GunType {
     RIFLE("Rifle"),
     PISTOL("Pistol"),
-    SHOTGUN("Shotgun");
+    SHOTGUN("Shotgun"),
+    LAUNCHER("Launcher");
 
     private final String displayName;
 

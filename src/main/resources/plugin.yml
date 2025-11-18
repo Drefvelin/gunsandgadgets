@@ -4,4 +4,4 @@ name: GunsAndGadgets
 version: 1.0
 author: Drefvelin
 
-depend: [TLibs]
+depend: [TLibs, MythicLib, MMOItems, MMOCore]

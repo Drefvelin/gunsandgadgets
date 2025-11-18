@@ -29,6 +29,8 @@ public class GunPart {
     // NEW: name-impact entries
     private final List<NameImpact> nameImpacts = new ArrayList<>();
     private final List<SkinImpact> skinImpacts = new ArrayList<>();
+    private List<String> permissions = new ArrayList<>();
+    private List<String> classRequirements = new ArrayList<>();
 
     public GunPart(String key, ConfigurationSection config) {
         this.id = key;
@@ -83,6 +85,9 @@ public class GunPart {
                 }
             }
         }
+
+        if(config.contains("permissions")) this.permissions = config.getStringList("permissions");
+        if(config.contains("class")) this.classRequirements = config.getStringList("class");
 
         this.calibers = config.getStringList("caliber");
         if (config.contains("caliber-override")) {
@@ -186,6 +191,8 @@ public class GunPart {
     public List<SkinImpact> getSkinImpacts() { return skinImpacts; }
     public Map<SoundType, List<PartSound>> getSounds() { return sounds; }
     public Map<SoundType, List<PartSound>> getSoundOverrides() { return soundOverrides; }
+    public List<String> getPermissions() { return permissions; }
+    public List<String> getClassRequirements() { return classRequirements; }
 
     // Inner class for name-impact
     public static class NameImpact {

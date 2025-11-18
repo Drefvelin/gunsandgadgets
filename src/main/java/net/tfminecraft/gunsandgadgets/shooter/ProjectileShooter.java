@@ -1,11 +1,16 @@
 package net.tfminecraft.gunsandgadgets.shooter;
 
+import net.tfminecraft.VehicleFramework.VehicleFramework;
+import net.tfminecraft.VehicleFramework.Util.LightEffect;
+import net.tfminecraft.VehicleFramework.Vehicles.ActiveVehicle;
+import net.tfminecraft.VehicleFramework.Vehicles.Vehicle;
 import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
+import net.tfminecraft.gunsandgadgets.attributes.AttributeReader;
+import net.tfminecraft.gunsandgadgets.cache.Cache;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
+import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition.AmmoOption;
 import net.tfminecraft.gunsandgadgets.guns.stats.StatCalculator;
 import net.tfminecraft.gunsandgadgets.util.SoundPlayer;
-
-import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -24,21 +29,18 @@ import org.bukkit.util.Vector;
 
 import io.lumine.mythic.lib.MythicLib;
 import io.lumine.mythic.lib.api.player.EquipmentSlot;
-import io.lumine.mythic.lib.api.player.MMOPlayerData;
 import io.lumine.mythic.lib.api.stat.provider.StatProvider;
 import io.lumine.mythic.lib.damage.AttackMetadata;
 import io.lumine.mythic.lib.damage.DamageMetadata;
 import io.lumine.mythic.lib.damage.DamageType;
-import io.lumine.mythic.lib.damage.ProjectileAttackMetadata;
 
 public class ProjectileShooter {
 
     private static final NamespacedKey SPEED_KEY =
             new NamespacedKey(GunsAndGadgets.getInstance(), "stat_value_speed");
 
-    public static void shoot(Player player, ItemStack gun, Ammunition ammo) {
+        public static void shoot(Player player, ItemStack gun, Ammunition ammo) {
         if (gun == null || !gun.hasItemMeta()) return;
-
         ItemMeta meta = gun.getItemMeta();
         if (meta == null) return;
 
@@ -47,6 +49,73 @@ public class ProjectileShooter {
             PersistentDataType.STRING
         );
         SoundPlayer.playSounds(player.getLocation(), shootSounds, true, 8f);
+
+        // Common values
+        Location start = player.getEyeLocation().clone();
+        Vector forward = start.getDirection().normalize();
+        start.add(forward.multiply(1.0));
+
+        // 💨 Muzzle smoke if not smokeless
+        if (!ammo.hasOption(AmmoOption.SMOKELESS)) {
+            spawnMuzzleSmoke(start, forward);
+        }
+        if (!ammo.hasOption(AmmoOption.NO_LIGHT)) {
+            (new LightEffect()).createTemporaryLight(start, 10);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    (new LightEffect()).createTemporaryLight(start, 15);
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            (new LightEffect()).createTemporaryLight(start, 8);
+                        }
+                    }.runTaskLater(GunsAndGadgets.getInstance(), 2L);
+                }
+            }.runTaskLater(GunsAndGadgets.getInstance(), 2L);
+        }
+
+        shootBullet(player, gun, ammo);
+    }
+
+    private static void spawnMuzzleSmoke(Location start, Vector forward) {
+        Vector velocity = forward.clone();
+        for(int i = 0; i<10; i++) {
+            double mult = Math.max(0.2, i*0.08);
+            velocity = forward.clone().multiply(mult);
+            Vector spread = new Vector(
+                    (Math.random() - 0.5) * 0.2,
+                    (Math.random() - 0.5) * 0.2,
+                    (Math.random() - 0.5) * 0.2
+                );
+            start.getWorld().spawnParticle(
+                Particle.CAMPFIRE_COSY_SMOKE,
+                start,
+                0,
+                spread.getX(), spread.getY(), spread.getZ(),
+                mult
+            );
+        }
+        for(int i = 0; i<10; i++) {
+            double mult = Math.max(0.2, i*0.08);
+            velocity = forward.clone().multiply(mult);
+            start.getWorld().spawnParticle(
+                Particle.CAMPFIRE_COSY_SMOKE,
+                start,
+                0,
+                velocity.getX(), velocity.getY(), velocity.getZ(),
+                mult
+            );
+        }
+    }
+
+
+
+    public static void shootBullet(Player player, ItemStack gun, Ammunition ammo) {
+        if (gun == null || !gun.hasItemMeta()) return;
+
+        ItemMeta meta = gun.getItemMeta();
+        if (meta == null) return;
 
 
         Location start = player.getEyeLocation().clone();
@@ -63,7 +132,7 @@ public class ProjectileShooter {
         int ammoRange = ammo.getStats().getOrDefault("range", 0);
 
         int totalRange = gunRange + ammoRange;
-        double maxDistance = (totalRange > 0 ? totalRange : speed * 20);
+        double maxDistance = (totalRange > 0 ? totalRange : ammo.hasOption(AmmoOption.ROCKET) ? 160 : Math.min(96, Math.abs(speed * 20)));
 
         // 🎯 Accuracy stat (gun + ammo)
         int gunAcc = meta.getPersistentDataContainer().getOrDefault(
@@ -72,7 +141,7 @@ public class ProjectileShooter {
         int ammoAcc = ammo.getStats().getOrDefault("accuracy", 0);
 
         int totalAcc = gunAcc + ammoAcc;
-        double spreadDegrees = StatCalculator.calculateAccuracy(totalAcc);
+        double spreadDegrees = Math.max(0.02, StatCalculator.calculateAccuracy(totalAcc)*AttributeReader.getAccuracyMultFromAttributes(player));
 
         int salt = meta.getPersistentDataContainer().getOrDefault(
                 new NamespacedKey(GunsAndGadgets.getInstance(), "accuracy_salt"),
@@ -84,7 +153,7 @@ public class ProjectileShooter {
 
         for (int i = 0; i < projectiles; i++) {
             Vector shotDir = applySpread(forward.clone(), spreadDegrees, rand);
-            Vector velocity = shotDir.multiply(speed * 0.7);
+            Vector velocity = shotDir.multiply(speed * (ammo.hasOption(AmmoOption.ROCKET) ? 0.3 : 0.7));
             int gunDamage = meta.getPersistentDataContainer().getOrDefault(
                     new NamespacedKey(GunsAndGadgets.getInstance(), "stat_value_damage"),
                     PersistentDataType.INTEGER, 0);
@@ -93,7 +162,40 @@ public class ProjectileShooter {
 
             int pierceStat = ammo.getStats().getOrDefault("pierce", 0);
 
-            startProjectileTask(player, start.clone(), velocity, maxDistance, totalDamage, pierceStat);
+            startProjectileTask(player, ammo, start.clone(), velocity, spreadDegrees, maxDistance, totalDamage, pierceStat);
+        }
+    }
+
+    private static void explode(Player shooter, Location loc, double damage, int pierceStat) {
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, loc, 10, 0, 0, 0, 0, null, true);
+        loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 8f, 1f);
+        (new LightEffect()).createTemporaryLight(loc, 10);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                (new LightEffect()).createTemporaryLight(loc, 15);
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        (new LightEffect()).createTemporaryLight(loc, 8);
+                    }
+                }.runTaskLater(GunsAndGadgets.getInstance(), 2L);
+            }
+        }.runTaskLater(GunsAndGadgets.getInstance(), 2L);
+
+        // Damage entities in radius
+        double radius = 8.0;
+        for (Entity e : loc.getWorld().getNearbyEntities(loc, radius, radius, radius)) {
+            if (e instanceof LivingEntity le) {
+                double dist = e.getLocation().distance(loc);
+                double scale = Math.max(0, 1 - (dist / radius)); // closer = more damage
+                applyDamage(shooter, le, damage * 2 * scale, pierceStat);
+            }
+        }
+
+        // Block damage (if enabled)
+        if (Cache.blockDamage) {
+            loc.getWorld().createExplosion(loc, 2f, false, true, shooter);
         }
     }
 
@@ -132,29 +234,91 @@ public class ProjectileShooter {
         v.setZ(z);
     }
 
-    private static void startProjectileTask(Player player, Location start, Vector velocity, double maxDistance, double damage, int pierceStat) {
+    private static void startProjectileTask(Player player, Ammunition ammo, Location start, Vector velocity, double spreadDegrees, double maxDistance, double damage, int pierceStat) {
         new BukkitRunnable() {
             Location loc = start.clone();
             Vector vel = velocity.clone();
 
+            // --- Rocket wobble state ---
+            Vector wobble = new Vector(0, 0, 0);
+            Vector wobbleTarget = randomOffset();
+            int ticks = 0;
+
+            // --- Spin mode state ---
+            boolean spinning = false;
+            int spinTicks = 0;
+            int spinDuration = 10; // lasts 10 ticks
+            Vector spinAxis = new Vector(0, 1, 0); // arbitrary axis (adjusted dynamically)
+
             @Override
             public void run() {
+                ticks++;
                 Location prev = loc.clone();
                 loc.add(vel);
 
-                // 🔍 Check for hits between prev → loc
-                handleHits(player, prev, loc, damage, pierceStat);
+                // 🚀 Rocket wobble
+                if (ammo.hasOption(AmmoOption.ROCKET) && ticks > 5) {
+                    if(ticks > 100) {
+                        explode(player, loc, damage, pierceStat);
+                        cancel();
+                        return;
+                    }
+                    if (!spinning && ticks % 5 == 0) {
+                        Vector newTarget = randomOffset();
+                        if (newTarget.clone().subtract(wobble).lengthSquared() > 1.5) {
+                            // big change → trigger spin mode
+                            spinning = true;
+                            spinTicks = 0;
+                            spinAxis = vel.clone().crossProduct(newTarget).normalize();
+                        }
+                        wobbleTarget = newTarget;
+                    }
+
+                    if (spinning) {
+                        spinTicks++;
+                        double angle = Math.sin(spinTicks / (double) spinDuration * Math.PI) * 0.4; // smooth wave
+                        vel.rotateAroundAxis(spinAxis, angle);
+
+                        if (spinTicks >= spinDuration) {
+                            spinning = false;
+                        }
+                    } else {
+                        // Smooth wobble
+                        wobble.multiply(0.8).add(wobbleTarget.clone().multiply(0.2));
+                        vel.add(wobble).normalize().multiply(velocity.length());
+                    }
+
+                    // Rocket sound
+                    if(ticks % 3 == 0) loc.getWorld().playSound(loc, Cache.rocketSound, 4f, 1.3f);
+                }
+
+                // 🔍 Check for hits
+                if (handleHits(player, ammo, prev, loc, damage, pierceStat)) {
+                    cancel();
+                    return;
+                }
 
                 // ✏️ Draw trace
-                drawLine(prev, loc, 160);
+                drawLine(ammo, prev, loc, 160);
 
-                // Gravity
-                vel.add(new Vector(0, -0.05, 0));
+                // Gravity (lighter for rockets)
+                vel.add(new Vector(0, ammo.hasOption(AmmoOption.ROCKET) ? -0.02 : -0.05, 0));
 
                 if (loc.distanceSquared(start) > maxDistance * maxDistance) cancel();
             }
+
+            private Vector randomOffset() {
+                return new Vector(
+                    (Math.random() - 0.5) * spreadDegrees/3,
+                    (Math.random() - 0.5) * spreadDegrees/3,
+                    (Math.random() - 0.5) * spreadDegrees/3
+                );
+            }
         }.runTaskTimer(GunsAndGadgets.getInstance(), 0L, 1L);
     }
+
+
+
 
     private static boolean isHeadshot(LivingEntity entity, Location hitPoint) {
         if (!(entity instanceof Player)) return false;
@@ -166,17 +330,28 @@ public class ProjectileShooter {
     }
 
 
-    private static void handleHits(Player player, Location from, Location to, double damage, int pierceStat) {
+    private static boolean handleHits(Player player, Ammunition ammo, Location from, Location to, double damage, int pierceStat) {
         Vector direction = to.toVector().subtract(from.toVector()).normalize();
         double distance = from.distance(to);
 
         RayTraceResult result = from.getWorld().rayTraceEntities(
-            from, direction, distance,
+            from,                    // start point
+            direction,               // direction vector (should be normalized)
+            distance,                // how far to check
+            Cache.creators.contains(player.getName()) ? 0.5 : 0.2,                     // radius (the "thickness" of the ray)
             entity -> entity instanceof LivingEntity && !((LivingEntity) entity).isDead()
         );
 
+
         if (result != null && result.getHitEntity() instanceof LivingEntity target) {
+            if(target instanceof Player) {
+                if(((Player) target).equals(player)) return false;
+            }
             Location hitPoint = result.getHitPosition().toLocation(from.getWorld());
+            if(ammo.hasOption(AmmoOption.ROCKET)) {
+                explode(player, hitPoint, damage, pierceStat);
+                return true;
+            }
 
             double finalDamage = damage;
             if (isHeadshot(target, hitPoint)) {
@@ -184,8 +359,27 @@ public class ProjectileShooter {
             }
 
             applyDamage(player, target, finalDamage, pierceStat);
+            return true; // ✅ stop projectile
+        } else if (result != null) {
+            Entity hit = result.getHitEntity();
+            ActiveVehicle v = VehicleFramework.getVehicleManager().get(hit);
+            if(v != null) {
+                if(ammo.hasOption(AmmoOption.ROCKET)) v.damage("ROCKET", damage);
+                else v.damage("PROJECTILE", damage);
+            }
         }
+
+        // Check block collision
+        if (from.getBlock().getType().isSolid()) {
+            if(ammo.hasOption(AmmoOption.ROCKET)) {
+                explode(player, from, damage, pierceStat);
+            }
+            return true; // ✅ hit a block, stop
+        }
+
+        return false;
     }
+
 
 
 
@@ -197,34 +391,47 @@ public class ProjectileShooter {
 
         // --- Step 2: Apply pierce directly (ignores reduction) ---
         if (pierceDamage > 0) {
-            target.damage(pierceDamage, attacker); // vanilla direct damage
+            if(pierceDamage > target.getHealth()) pierceDamage = target.getHealth()-0.1;
+            target.damage(pierceDamage); // vanilla direct damage
         }
 
         // --- Step 3: Apply remaining damage via MythicLib/MMOCore ---
         if (normalDamage > 0) {
-            DamageMetadata dmgMeta = new DamageMetadata(normalDamage, DamageType.PHYSICAL, DamageType.PROJECTILE);
+            DamageMetadata dmgMeta = new DamageMetadata(normalDamage, DamageType.PROJECTILE);
             AttackMetadata attackMeta = new AttackMetadata(dmgMeta, target, StatProvider.get(attacker, EquipmentSlot.MAIN_HAND, true));
             MythicLib.inst().getDamage().registerAttack(attackMeta, false, true);
         }
     }
 
 
-    private static void drawLine(Location from, Location to, double radius) {
+    private static void drawLine(Ammunition ammo, Location from, Location to, double radius) {
         Vector diff = to.toVector().subtract(from.toVector());
         int steps = (int) (diff.length() * 4);
         Vector step = diff.clone().multiply(1.0 / steps);
 
         Location point = from.clone();
         for (int i = 0; i < steps; i++) {
-            from.getWorld().spawnParticle(
-                Particle.SMOKE_NORMAL,
-                point,
-                1,
-                0, 0, 0,
-                0,
-                null,
-                true
-            );
+            if(ammo.hasOption(AmmoOption.ROCKET)) {
+                from.getWorld().spawnParticle(
+                    Particle.FIREWORKS_SPARK,
+                    point,
+                    10,
+                    0, 0, 0,
+                    0.05,
+                    null,
+                    true
+                );
+            } else {
+                from.getWorld().spawnParticle(
+                    Particle.SMOKE_NORMAL,
+                    point,
+                    1,
+                    0, 0, 0,
+                    0,
+                    null,
+                    true
+                );
+            }
             point.add(step);
         }
     }
