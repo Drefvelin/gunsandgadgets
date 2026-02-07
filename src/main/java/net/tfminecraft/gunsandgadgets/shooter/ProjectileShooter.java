@@ -338,7 +338,7 @@ public class ProjectileShooter {
             from,                    // start point
             direction,               // direction vector (should be normalized)
             distance,                // how far to check
-            Cache.creators.contains(player.getName()) ? 0.5 : 0.2,                     // radius (the "thickness" of the ray)
+            0.5,                     // radius (the "thickness" of the ray)
             entity -> entity instanceof LivingEntity && !((LivingEntity) entity).isDead()
         );
 
@@ -346,6 +346,7 @@ public class ProjectileShooter {
         if (result != null && result.getHitEntity() instanceof LivingEntity target) {
             if(target instanceof Player) {
                 if(((Player) target).equals(player)) return false;
+                if(!ammo.hasOption(AmmoOption.ROCKET)) player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1f, 1f);
             }
             Location hitPoint = result.getHitPosition().toLocation(from.getWorld());
             if(ammo.hasOption(AmmoOption.ROCKET)) {
