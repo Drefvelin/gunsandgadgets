@@ -12,10 +12,16 @@ import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition.AmmoOption;
 import net.tfminecraft.gunsandgadgets.guns.stats.StatCalculator;
 import net.tfminecraft.gunsandgadgets.util.SoundPlayer;
 
+import org.bukkit.Bukkit;
+import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.Tag;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -131,8 +137,8 @@ public class ProjectileShooter {
                 PersistentDataType.INTEGER, 0);
         int ammoRange = ammo.getStats().getOrDefault("range", 0);
 
-        int totalRange = gunRange + ammoRange;
-        double maxDistance = (totalRange > 0 ? totalRange : ammo.hasOption(AmmoOption.ROCKET) ? 160 : Math.min(96, Math.abs(speed * 20)));
+        int totalRange = (gunRange + ammoRange)*2;
+        double maxDistance = (totalRange > 0 ? totalRange : ammo.hasOption(AmmoOption.ROCKET) ? 160 : Math.max(96, Math.min(192, speed*10)));
 
         // 🎯 Accuracy stat (gun + ammo)
         int gunAcc = meta.getPersistentDataContainer().getOrDefault(
@@ -166,9 +172,10 @@ public class ProjectileShooter {
         }
     }
 
-    private static void explode(Player shooter, Location loc, double damage, int pierceStat) {
+    private static void explode(Player shooter, Location loc, double damage, int pierceStat, int ticks) {
         loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, loc, 10, 0, 0, 0, 0, null, true);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 8f, 1f);
+        double timeScale = (ticks <= 20) ? (ticks / 20.0) : 1.0;
         (new LightEffect()).createTemporaryLight(loc, 10);
         new BukkitRunnable() {
             @Override
@@ -189,7 +196,11 @@ public class ProjectileShooter {
             if (e instanceof LivingEntity le) {
                 double dist = e.getLocation().distance(loc);
                 double scale = Math.max(0, 1 - (dist / radius)); // closer = more damage
-                applyDamage(shooter, le, damage * 2 * scale, pierceStat);
+                double finalDamage = damage * 2 * scale * timeScale;
+                if(le instanceof Player) {
+                    if(((Player) le).equals(shooter)) finalDamage *= damage * 2 * scale; // shooter takes full damage (no time reduction) to encourage smart use of cover and timing with rockets
+                }
+                applyDamage(shooter, le, finalDamage, pierceStat);
             }
         }
 
@@ -259,7 +270,7 @@ public class ProjectileShooter {
                 // 🚀 Rocket wobble
                 if (ammo.hasOption(AmmoOption.ROCKET) && ticks > 5) {
                     if(ticks > 100) {
-                        explode(player, loc, damage, pierceStat);
+                        explode(player, loc, damage, pierceStat, ticks);
                         cancel();
                         return;
                     }
@@ -293,13 +304,13 @@ public class ProjectileShooter {
                 }
 
                 // 🔍 Check for hits
-                if (handleHits(player, ammo, prev, loc, damage, pierceStat)) {
+                if (handleHits(player, ammo, prev, loc, damage, pierceStat, ticks)) {
                     cancel();
                     return;
                 }
 
                 // ✏️ Draw trace
-                drawLine(ammo, prev, loc, 160);
+                drawLine(ammo, prev, loc, 256);
 
                 // Gravity (lighter for rockets)
                 vel.add(new Vector(0, ammo.hasOption(AmmoOption.ROCKET) ? -0.02 : -0.05, 0));
@@ -330,7 +341,7 @@ public class ProjectileShooter {
     }
 
 
-    private static boolean handleHits(Player player, Ammunition ammo, Location from, Location to, double damage, int pierceStat) {
+    private static boolean handleHits(Player player, Ammunition ammo, Location from, Location to, double damage, int pierceStat, int ticks) {
         Vector direction = to.toVector().subtract(from.toVector()).normalize();
         double distance = from.distance(to);
 
@@ -338,7 +349,7 @@ public class ProjectileShooter {
             from,                    // start point
             direction,               // direction vector (should be normalized)
             distance,                // how far to check
-            0.5,                     // radius (the "thickness" of the ray)
+            0.4,                     // radius (the "thickness" of the ray)
             entity -> entity instanceof LivingEntity && !((LivingEntity) entity).isDead()
         );
 
@@ -346,11 +357,10 @@ public class ProjectileShooter {
         if (result != null && result.getHitEntity() instanceof LivingEntity target) {
             if(target instanceof Player) {
                 if(((Player) target).equals(player)) return false;
-                if(!ammo.hasOption(AmmoOption.ROCKET)) player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1f, 1f);
             }
             Location hitPoint = result.getHitPosition().toLocation(from.getWorld());
             if(ammo.hasOption(AmmoOption.ROCKET)) {
-                explode(player, hitPoint, damage, pierceStat);
+                explode(player, hitPoint, damage, pierceStat, ticks);
                 return true;
             }
 
@@ -358,8 +368,24 @@ public class ProjectileShooter {
             if (isHeadshot(target, hitPoint)) {
                 finalDamage *= 1.5; // 🔥 1.5x multiplier for headshots
             }
-
             applyDamage(player, target, finalDamage, pierceStat);
+            if((target instanceof Player) && !ammo.hasOption(AmmoOption.ROCKET)) {
+                if(target.isDead()) {
+                    new BukkitRunnable() {
+                        float pitch = 1.2f;
+                        int count = 0;
+                        @Override
+                        public void run() {
+                            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, pitch);
+                            pitch += 0.3f;
+                            count++;
+                            if(count >= 4) cancel();
+                        }
+                    }.runTaskTimer(GunsAndGadgets.getInstance(), 0L, 2L);
+                } else {
+                    player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1f, 1f);
+                }
+            }
             return true; // ✅ stop projectile
         } else if (result != null) {
             Entity hit = result.getHitEntity();
@@ -370,19 +396,96 @@ public class ProjectileShooter {
             }
         }
 
-        // Check block collision
-        if (from.getBlock().getType().isSolid()) {
-            if(ammo.hasOption(AmmoOption.ROCKET)) {
-                explode(player, from, damage, pierceStat);
+        World world = from.getWorld();
+        double step = 0.3; // smaller = more accurate, larger = faster
+        Vector stepVector = direction.clone().multiply(step);
+
+        Location current = from.clone();
+
+        for (double traveled = 0; traveled < distance; traveled += step) {
+            current.add(stepVector);
+
+            Block block = current.getBlock();
+            if (block.getType().isAir()) continue;
+
+            // 🚪 Pass-through blocks (leaves / glass)
+            if (!ammo.hasOption(AmmoOption.ROCKET) && isBulletPassable(block)) {
+
+                if (block.getType().name().contains("GLASS")) {
+                    world.playSound(current, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
+                    world.spawnParticle(
+                            Particle.BLOCK_DUST,
+                            current,
+                            10,
+                            0.1, 0.1, 0.1,
+                            block.getBlockData()
+                    );
+                }
+
+                continue;
             }
-            return true; // ✅ hit a block, stop
+
+            // 🔥 Partial-block collision test
+            if (!intersectsCollision(block, current)) {
+                continue;
+            }
+
+            // 💥 Real impact
+            if (ammo.hasOption(AmmoOption.ROCKET)) {
+                explode(player, current, damage, pierceStat, ticks);
+            } else {
+                drawLine(ammo, from.clone(), current, 256);
+                world.spawnParticle(
+                        Particle.EXPLOSION_NORMAL,
+                        current,
+                        2,
+                        0.2, 0.2, 0.2,
+                        0,
+                        null,
+                        true
+                );
+                world.playSound(current, Sound.BLOCK_STONE_BREAK, 1f, 2f);
+            }
+
+            return true;
         }
 
         return false;
     }
 
+    private static boolean isBulletPassable(Block block) {
+        Material type = block.getType();
 
+        // Leaves
+        if (Tag.LEAVES.isTagged(type)) return true;
 
+        // Glass & panes
+        if (type.name().contains("GLASS")) return true;
+
+        return false;
+    }
+
+    private static boolean intersectsCollision(Block block, Location point) {
+        if (block.isPassable()) return false;
+
+        var shape = block.getCollisionShape();
+        if (shape.getBoundingBoxes().isEmpty()) return false;
+
+        Location base = block.getLocation();
+
+        for (BoundingBox box : shape.getBoundingBoxes()) {
+            BoundingBox worldBox = box.clone().shift(
+                    base.getX(),
+                    base.getY(),
+                    base.getZ()
+            );
+
+            if (worldBox.contains(point.toVector())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static void applyDamage(Player attacker, LivingEntity target, double baseDamage, int pierceStat) {
         // --- Step 1: Calculate piercing portion ---
@@ -409,11 +512,10 @@ public class ProjectileShooter {
         Vector diff = to.toVector().subtract(from.toVector());
         int steps = (int) (diff.length() * 4);
         Vector step = diff.clone().multiply(1.0 / steps);
-
         Location point = from.clone();
         for (int i = 0; i < steps; i++) {
             if(ammo.hasOption(AmmoOption.ROCKET)) {
-                from.getWorld().spawnParticle(
+                point.getWorld().spawnParticle(
                     Particle.FIREWORKS_SPARK,
                     point,
                     10,
@@ -423,7 +525,7 @@ public class ProjectileShooter {
                     true
                 );
             } else {
-                from.getWorld().spawnParticle(
+                point.getWorld().spawnParticle(
                     Particle.SMOKE_NORMAL,
                     point,
                     1,
