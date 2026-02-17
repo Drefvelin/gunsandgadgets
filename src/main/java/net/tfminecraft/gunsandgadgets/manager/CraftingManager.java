@@ -86,7 +86,7 @@ public class CraftingManager implements Listener {
     }
 
     private boolean hasInputs(Player p, Collection<GunPart> parts) {
-        if(p.hasPermission("gg.bypass_crafting_cost")) return true;
+        if(p.hasPermission("gg.bypass_crafting_cost") || !Cache.requireInput) return true;
         Map<String, Integer> costs = new HashMap<>();
 
         // Collect total costs

@@ -36,6 +36,7 @@ public class ConfigLoader {
                 }
             }
         }
+        Cache.requireInput = config.getBoolean("require-input", true);
 
         section = config.getConfigurationSection("attributes");
         if (section != null) {

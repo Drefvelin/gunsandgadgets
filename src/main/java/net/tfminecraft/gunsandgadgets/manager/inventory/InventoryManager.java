@@ -508,7 +508,7 @@ public class InventoryManager implements Listener {
             }
         }
 
-        if(part.hasCost()) {
+        if(part.hasCost() && Cache.requireInput) {
             lore.add(""); // spacer line
             lore.add(StringFormatter.formatHex("#76de91§lInput:"));
             lore.addAll(CostFormatter.getCostsFormatted(part.getCost()));
@@ -601,6 +601,7 @@ public class InventoryManager implements Listener {
     }
 
     private boolean hasPermissionForPart(Player player, GunPart part) {
+        if(!Cache.requireInput) return true; //tutorial setup
         if (part.getPermissions() == null || part.getPermissions().isEmpty()) return true;
         for (String perm : part.getPermissions()) {
             if (player.hasPermission(perm)) return true;

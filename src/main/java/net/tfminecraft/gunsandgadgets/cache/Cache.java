@@ -13,6 +13,7 @@ public class Cache {
     public static int outputSlot;
     public static HashMap<GunType, String> outputItems = new HashMap<>();
     public static String station;
+    public static boolean requireInput;
 
     public static boolean blockDamage;
     public static String rocketSound;
