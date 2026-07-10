@@ -63,7 +63,11 @@ public class CraftingManager implements Listener {
             GunType chosenType = TypeSelectionManager.getSelectedType(player);
             Collection<GunPart> parts = inv.collectPartsForPlayer(player, chosenType); 
             // ⬆️ implement a helper to re-collect GunParts same way as when previewing
-
+            // Check for class conflicts before crafting
+            if (inv.hasClassConflict(player, parts)) {
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return;
+            }
             // Rebuild the final item (no GUI lines)
             ItemStack crafted = inv.createOutputItem(chosenType, parts, false);
 

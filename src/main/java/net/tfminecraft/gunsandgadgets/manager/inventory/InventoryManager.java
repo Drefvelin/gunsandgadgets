@@ -30,6 +30,7 @@ import me.Plugins.TLibs.TLibs;
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 import net.Indyuce.mmoitems.ItemStats;
 import net.Indyuce.mmoitems.api.item.mmoitem.LiveMMOItem;
+import net.Indyuce.mmoitems.stat.data.BooleanData;
 import net.Indyuce.mmoitems.stat.data.StringListData;
 import net.Indyuce.mmoitems.stat.type.StatHistory;
 import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
@@ -246,12 +247,65 @@ public class InventoryManager implements Listener {
         return sb.toString().trim();
     }
 
-    private ItemStack applyClass(ItemStack item, Collection<GunPart> parts) {
-        // Use a set to avoid duplicates
-        Set<String> classes = new HashSet<>();
+    /**
+     * Computes the intersection of class requirements across all parts that have restrictions.
+     * Returns an empty set if no parts have restrictions (no class lock).
+     * Returns null if there is a conflict (intersection became empty but at least one part had requirements).
+     */
+    private Set<String> resolveClasses(Collection<GunPart> parts) {
+        Set<String> intersection = null;
         for (GunPart part : parts) {
-            classes.addAll(part.getClassRequirements());
+            List<String> reqs = part.getClassRequirements();
+            if (reqs == null || reqs.isEmpty()) continue;
+            if (intersection == null) {
+                intersection = new HashSet<>(reqs);
+            } else {
+                intersection.retainAll(new HashSet<>(reqs));
+                if (intersection.isEmpty()) return null; // conflict
+            }
         }
+        return intersection != null ? intersection : Collections.emptySet();
+    }
+
+    /**
+     * Returns true if the given parts have incompatible class requirements,
+     * and sends a descriptive message to the player.
+     */
+    public boolean hasClassConflict(Player player, Collection<GunPart> parts) {
+        Set<String> resolved = resolveClasses(parts);
+        if (resolved != null) return false; // no conflict
+
+        player.sendMessage("§cClass conflict! These parts have incompatible class requirements:");
+        for (GunPart part : parts) {
+            List<String> reqs = part.getClassRequirements();
+            if (reqs != null && !reqs.isEmpty()) {
+                player.sendMessage("§7  " + part.getName() + "§c: §7" + String.join("§c, §7", reqs));
+            }
+        }
+        return true;
+    }
+
+    private ItemStack makeTwoHanded(ItemStack item) {
+        if (NBTItem.get(item).hasType()) {
+            LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(item));
+
+            // Convert back to list for MMOItems data
+            BooleanData data = new BooleanData(true);
+            StatHistory hist = StatHistory.from(mmo, ItemStats.TWO_HANDED);
+            if (hist != null) {
+                hist.setOriginalData(data);
+                mmo.setStatHistory(ItemStats.TWO_HANDED, hist);
+            }
+
+            return mmo.newBuilder().build();
+        }
+        return item;
+    }
+
+    private ItemStack applyClass(ItemStack item, Collection<GunPart> parts) {
+        Set<String> classes = resolveClasses(parts);
+        // null = conflict (no valid class intersection) → skip applying class
+        if (classes == null || classes.isEmpty()) return item;
 
         if (NBTItem.get(item).hasType() && !classes.isEmpty()) {
             LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(item));
@@ -366,6 +420,9 @@ public class InventoryManager implements Listener {
             // Apply stats afterwards (so lore & stat PDCs get written)
             base = StatApplier.apply(base, parts, gui);
         }
+
+        boolean twoHanded = parts.stream().anyMatch(GunPart::isTwoHanded);
+        if (twoHanded) base = makeTwoHanded(base);
 
         return base;
     }
@@ -530,6 +587,7 @@ public class InventoryManager implements Listener {
 
             ItemStack current = event.getCurrentItem();
             if (current != null && current.getType() == Material.GRAY_STAINED_GLASS_PANE) return;
+            if(current == null || !current.hasItemMeta()) return;
             if(current.getType().equals(Material.BARRIER)) return;
             if(event.getSlot() == Cache.outputSlot) return;
             // slot 0 -> choose gun type

@@ -20,6 +20,7 @@ public class GunPart {
     private final List<String> calibers;
     private List<String> caliberOverrides;
     private List<String> lore = new ArrayList<>();
+    private final boolean isTwoHanded;
 
     private final Map<SoundType, List<PartSound>> sounds = new HashMap<>();
     private final Map<SoundType, List<PartSound>> soundOverrides = new HashMap<>();
@@ -40,6 +41,7 @@ public class GunPart {
         if (data != null) partType = data;
 
         this.itemKey = config.getString("item", "v.stone");
+        this.isTwoHanded = config.getBoolean("two-handed", false);
 
         for (String s : config.getStringList("type")) {
             try {
@@ -193,6 +195,7 @@ public class GunPart {
     public Map<SoundType, List<PartSound>> getSoundOverrides() { return soundOverrides; }
     public List<String> getPermissions() { return permissions; }
     public List<String> getClassRequirements() { return classRequirements; }
+    public boolean isTwoHanded() { return isTwoHanded; }
 
     // Inner class for name-impact
     public static class NameImpact {
