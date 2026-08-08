@@ -173,7 +173,7 @@ public class ProjectileShooter {
     }
 
     private static void explode(Player shooter, Location loc, double damage, int pierceStat, int ticks) {
-        loc.getWorld().spawnParticle(Particle.EXPLOSION_HUGE, loc, 10, 0, 0, 0, 0, null, true);
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, loc, 10, 0, 0, 0, 0, null, true);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 8f, 1f);
         double timeScale = (ticks <= 20) ? (ticks / 20.0) : 1.0;
         (new LightEffect()).createTemporaryLight(loc, 10);
@@ -414,7 +414,7 @@ public class ProjectileShooter {
                 if (block.getType().name().contains("GLASS")) {
                     world.playSound(current, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
                     world.spawnParticle(
-                            Particle.BLOCK_DUST,
+                            Particle.BLOCK,
                             current,
                             10,
                             0.1, 0.1, 0.1,
@@ -436,7 +436,7 @@ public class ProjectileShooter {
             } else {
                 drawLine(ammo, from.clone(), current, 256);
                 world.spawnParticle(
-                        Particle.EXPLOSION_NORMAL,
+                        Particle.EXPLOSION,
                         current,
                         2,
                         0.2, 0.2, 0.2,
@@ -516,7 +516,7 @@ public class ProjectileShooter {
         for (int i = 0; i < steps; i++) {
             if(ammo.hasOption(AmmoOption.ROCKET)) {
                 point.getWorld().spawnParticle(
-                    Particle.FIREWORKS_SPARK,
+                    Particle.FIREWORK,
                     point,
                     10,
                     0, 0, 0,
@@ -526,7 +526,7 @@ public class ProjectileShooter {
                 );
             } else {
                 point.getWorld().spawnParticle(
-                    Particle.SMOKE_NORMAL,
+                    Particle.SMOKE,
                     point,
                     1,
                     0, 0, 0,

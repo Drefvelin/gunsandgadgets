@@ -27,6 +27,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import io.lumine.mythic.lib.api.item.NBTItem;
 import me.Plugins.TLibs.TLibs;
+import me.Plugins.TLibs.Objects.API.SubAPI.ItemSkinPreserver;
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 import net.Indyuce.mmoitems.ItemStats;
 import net.Indyuce.mmoitems.api.item.mmoitem.LiveMMOItem;
@@ -360,12 +361,20 @@ public class InventoryManager implements Listener {
         base = applyClass(base, parts);
 
         ItemStack skinItem = skin.parseModel(SkinState.CARRY);
-        base.setType(skinItem.getType());
+        if (ItemSkinPreserver.hasSkinData(skinItem)) {
+            base = ItemSkinPreserver.applyAppearanceFromSkin(skinItem, base);
+        } else {
+            base.setType(skinItem.getType());
+        }
 
         // Meta edits
         ItemMeta meta = base.getItemMeta();
         if (meta != null) {
-            meta.setCustomModelData(skinItem.getItemMeta().getCustomModelData());
+            if (!ItemSkinPreserver.hasSkinData(skinItem)
+                    && skinItem.getItemMeta() != null
+                    && skinItem.getItemMeta().hasCustomModelData()) {
+                meta.setCustomModelData(skinItem.getItemMeta().getCustomModelData());
+            }
             meta.setDisplayName(buildName(parts));
 
             PersistentDataContainer pdc = meta.getPersistentDataContainer();

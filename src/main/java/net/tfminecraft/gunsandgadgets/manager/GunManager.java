@@ -48,6 +48,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import io.lumine.mythic.lib.api.item.NBTItem;
 import me.Plugins.TLibs.TLibs;
+import me.Plugins.TLibs.Objects.API.SubAPI.ItemSkinPreserver;
 import me.Plugins.TLibs.Objects.API.SubAPI.StringFormatter;
 
 public class GunManager implements Listener {
@@ -440,9 +441,17 @@ public class GunManager implements Listener {
 
     public ItemStack applyModel(ItemStack i, SkinData data, SkinState state) {
         ItemStack skin = data.parseModel(state);
+        if (skin == null || skin.getType().isAir()) {
+            return i;
+        }
+        if (ItemSkinPreserver.hasSkinData(skin)) {
+            return ItemSkinPreserver.applyAppearanceFromSkin(skin, i);
+        }
         ItemMeta m = i.getItemMeta();
-        m.setCustomModelData(skin.getItemMeta().getCustomModelData());
-        i.setItemMeta(m);
+        if (m != null && skin.getItemMeta() != null && skin.getItemMeta().hasCustomModelData()) {
+            m.setCustomModelData(skin.getItemMeta().getCustomModelData());
+            i.setItemMeta(m);
+        }
         i.setType(skin.getType());
         return i;
     }

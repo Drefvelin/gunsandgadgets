@@ -7,6 +7,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+
+import me.Plugins.TLibs.TLibs;
 
 public class SkinData {
 
@@ -25,8 +28,8 @@ public class SkinData {
         this.aim = config.getString("aim", "");
 
         this.types = new ArrayList<>(config.getStringList("types"));
-        this.options = config.contains("options") 
-                ? new ArrayList<>(config.getStringList("options")) 
+        this.options = config.contains("options")
+                ? new ArrayList<>(config.getStringList("options"))
                 : new ArrayList<>();
     }
 
@@ -61,7 +64,7 @@ public class SkinData {
 
     public ItemStack parseModel(SkinState state) {
         String path = null;
-        switch(state) {
+        switch (state) {
             case AIM:
                 path = aim;
                 break;
@@ -74,11 +77,24 @@ public class SkinData {
             default:
                 break;
         }
-        if (path == null || path.isEmpty()) return new ItemStack(Material.BARRIER);
+        if (path == null || path.isEmpty()) {
+            return new ItemStack(Material.BARRIER);
+        }
 
-        String[] split = path.split("\\.");
-        Material mat = Material.matchMaterial(split[0].toUpperCase());
-        if (mat == null) mat = Material.BARRIER;
+        String trimmed = path.trim();
+        if (trimmed.toLowerCase(Locale.ROOT).startsWith("ia.")) {
+            ItemStack ia = TLibs.getItemAPI().getCreator().getItemFromPath(trimmed);
+            if (ia == null || ia.getType().isAir()) {
+                return new ItemStack(Material.BARRIER);
+            }
+            return ia;
+        }
+
+        String[] split = trimmed.split("\\.");
+        Material mat = Material.matchMaterial(split[0].toUpperCase(Locale.ROOT));
+        if (mat == null) {
+            mat = Material.BARRIER;
+        }
 
         ItemStack item = new ItemStack(mat);
         if (split.length > 1) {
@@ -89,7 +105,8 @@ public class SkinData {
                     meta.setCustomModelData(data);
                     item.setItemMeta(meta);
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
         return item;
     }
