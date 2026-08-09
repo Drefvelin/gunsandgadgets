@@ -37,7 +37,7 @@ public class SkinLoader implements LoaderInterface{
         Set<String> set = config.getKeys(false);
 
 		List<String> list = new ArrayList<String>(set);
-		
+
 		for(String key : list) {
 			SkinData o = new SkinData(key, config.getConfigurationSection(key));
 			oList.put(key, o);

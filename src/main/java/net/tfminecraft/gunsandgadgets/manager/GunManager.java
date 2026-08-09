@@ -189,7 +189,8 @@ public class GunManager implements Listener {
             if (bullets <= 0) {
                 // Show carry model when empty
                 meta.getPersistentDataContainer().remove(loadedAmmoKey);
-                applyModel(item, skin, SkinState.CARRY);
+                item.setItemMeta(meta);
+                item = applyModel(item, skin, SkinState.CARRY);
 
                 // Clear arrow if crossbow
                 if (item.getType() == Material.CROSSBOW) {
@@ -289,9 +290,13 @@ public class GunManager implements Listener {
 
                 if (tick >= reloadTicks) {
                     // ✅ Finish reload
-                    applyModel(current, skin, SkinState.AIM);
+                    current = applyModel(current, skin, SkinState.AIM);
                     ItemMeta reloadMeta = current.getItemMeta();
-
+                    if (reloadMeta == null) {
+                        reloading.remove(id);
+                        cancel();
+                        return;
+                    }
 
                     // Load exactly how many bullets were consumed
                     int loaded = reloadMeta.getPersistentDataContainer()
@@ -308,12 +313,12 @@ public class GunManager implements Listener {
                     reloadMeta.getPersistentDataContainer().remove(reloadAmmoKey);
                     reloadMeta.getPersistentDataContainer().remove(reloadAmountKey);
 
-
                     current.setItemMeta(reloadMeta);
                     player.getInventory().setItemInMainHand(current);
 
-                    if (player.getInventory().getItemInMainHand().getType() == Material.CROSSBOW) {
-                        chargeCrossbow(player.getInventory().getItemInMainHand(), loadedAmmo, loaded);
+                    if (current.getType() == Material.CROSSBOW) {
+                        chargeCrossbow(current, loadedAmmo, loaded);
+                        player.getInventory().setItemInMainHand(current);
                     }
 
                     /*
@@ -346,7 +351,9 @@ public class GunManager implements Listener {
             return;
         }
         String gunType = meta.getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
-        for(ItemStack i : p.getInventory().getContents()) {
+        ItemStack[] contents = p.getInventory().getContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack i = contents[slot];
             if(i == null) continue;
             ItemMeta m = i.getItemMeta();
             if(m == null) continue;
@@ -360,6 +367,7 @@ public class GunManager implements Listener {
             int bullets = m.getPersistentDataContainer()
                 .getOrDefault(bulletsKey, PersistentDataType.INTEGER, 0);
             if(bullets == 0) continue;
+            String ammoId = m.getPersistentDataContainer().get(loadedAmmoKey, PersistentDataType.STRING);
             m.getPersistentDataContainer().remove(loadedAmmoKey);
             m.getPersistentDataContainer().remove(bulletsKey);
             i.setItemMeta(m);
@@ -370,8 +378,8 @@ public class GunManager implements Listener {
 
             SkinData skin = SkinLoader.get().get(skinId);
             if (skin == null) continue;
-           
-            applyModel(i, skin, SkinState.CARRY);
+
+            i = applyModel(i, skin, SkinState.CARRY);
 
             // Clear arrow if crossbow
             if (i.getType() == Material.CROSSBOW) {
@@ -379,7 +387,6 @@ public class GunManager implements Listener {
                 cbMeta.setChargedProjectiles(new ArrayList<>());
                 i.setItemMeta(cbMeta);
             }
-            String ammoId = m.getPersistentDataContainer().get(loadedAmmoKey, PersistentDataType.STRING);
 
             if (ammoId != null && bullets > 0) {
                 // Refund ammo
@@ -390,8 +397,9 @@ public class GunManager implements Listener {
                     p.getInventory().addItem(refund);
                 }
             }
-            p.updateInventory();
+            p.getInventory().setItem(slot, i);
         }
+        p.updateInventory();
     }
 
     @EventHandler
@@ -409,28 +417,30 @@ public class GunManager implements Listener {
                 if (skinId != null) {
                     SkinData skin = SkinLoader.get().get(skinId);
                     if (skin != null) {
-                        applyModel(item, skin, SkinState.CARRY);
-                        player.getInventory().setItem(event.getPreviousSlot(), item);
+                        item = applyModel(item, skin, SkinState.CARRY);
                         ItemMeta cancelMeta = item.getItemMeta();
-                        PersistentDataContainer pdc = cancelMeta.getPersistentDataContainer();
+                        if (cancelMeta != null) {
+                            PersistentDataContainer pdc = cancelMeta.getPersistentDataContainer();
 
-                        String ammoId = pdc.get(reloadAmmoKey, PersistentDataType.STRING);
-                        int amount = pdc.getOrDefault(reloadAmountKey, PersistentDataType.INTEGER, 0);
+                            String ammoId = pdc.get(reloadAmmoKey, PersistentDataType.STRING);
+                            int amount = pdc.getOrDefault(reloadAmountKey, PersistentDataType.INTEGER, 0);
 
-                        if (ammoId != null && amount > 0) {
-                            // Refund ammo
-                            Ammunition ammo = AmmunitionLoader.getByString(ammoId);
-                            if(ammo != null) {
-                                ItemStack refund = TLibs.getItemAPI().getCreator().getItemFromPath(ammo.getInput());
-                                refund.setAmount(amount);
-                                player.getInventory().addItem(refund);
+                            if (ammoId != null && amount > 0) {
+                                // Refund ammo
+                                Ammunition ammo = AmmunitionLoader.getByString(ammoId);
+                                if(ammo != null) {
+                                    ItemStack refund = TLibs.getItemAPI().getCreator().getItemFromPath(ammo.getInput());
+                                    refund.setAmount(amount);
+                                    player.getInventory().addItem(refund);
+                                }
                             }
-                        }
 
-                        // Clean up
-                        pdc.remove(reloadAmmoKey);
-                        pdc.remove(reloadAmountKey);
-                        item.setItemMeta(cancelMeta);
+                            // Clean up
+                            pdc.remove(reloadAmmoKey);
+                            pdc.remove(reloadAmountKey);
+                            item.setItemMeta(cancelMeta);
+                        }
+                        player.getInventory().setItem(event.getPreviousSlot(), item);
                     }
                 }
             }
