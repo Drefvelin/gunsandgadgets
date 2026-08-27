@@ -17,6 +17,7 @@ public class Cache {
 
     public static boolean blockDamage;
     public static String rocketSound;
+    public static boolean statRefreshDebug;
 
     public static Map<GunType, List<String>> requiredParts = new HashMap<>();
 

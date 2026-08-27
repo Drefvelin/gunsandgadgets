@@ -1,26 +1,41 @@
 pebbleshot:
-  input: modeled.(type=iron_nugget;name=§7Pebbleshot)
+  input: m.utils.pebbleshot
+  options:
+    - smokeless
+    - no_light
   stats:
-    - damage 7
+    - damage 8
     - accuracy -2
+    - pierce 1
 spreadshot:
-  input: modeled.(type=iron_nugget;name=§7Spreadshot)
-  amount: 12
+  input: m.utils.spreadshot
+  amount: 16
   stats:
-    - damage 4
-    - accuracy -10
+    - range 20
+    - damage 1
 ironshot:
-  input: modeled.(type=iron_nugget;name=§7Ironshot)
+  input: m.utils.ironshot
   stats:
     - damage 9
     - accuracy -1
+    - pierce 4
 steelshot:
-  input: modeled.(type=iron_nugget;name=§7Steelshot)
+  input: m.utils.steelshot
   stats:
     - damage 12
     - accuracy 4
+    - pierce 5
 bronzeshot:
-  input: modeled.(type=iron_nugget;name=§7Steelshot)
+  input: m.utils.bronzeshot
   stats:
-    - damage 19
+    - damage 16
     - accuracy 6
+    - pierce 8
+rocket:
+  input: m.utils.rocket
+  options:
+    - rocket
+  stats:
+    - damage 18
+    - accuracy 2
+    - pierce 14

@@ -9,7 +9,7 @@ depend: [TLibs, MythicLib, MMOItems, MMOCore]
 commands:
   gg:
     description: GunsAndGadgets admin commands
-    usage: /<command> reload
+    usage: /<command> reload|refresh
     permission: gunsandgadgets.reload
     permission-message: You do not have permission to use GunsAndGadgets admin commands.
 

@@ -1,23 +1,38 @@
-#Barrels
+# Gun parts. Use disabled: true to retire a part from new crafts (do not delete ids).
+# disabled: true   # example - hidden from assembly; existing stamped guns still resolve this part
+
+# Barrels
 smoothbore_barrel_long:
   name: "§7Smoothbore Barrel (Long)"
   part-type: barrel
   type:
     - rifle
-  item: v.iron_ingot
+  item: modeled.(type=gray_dye;model=15)
+  sounds:
+    - shoot minecraft:guns.musket_2,minecraft:guns.musket_4,minecraft:guns.musket_6
   stats:
     - accuracy 5
     - speed 10
   caliber:
     - ironshot
   name-impact:
-    - Musket 1 10 
+    - Musket 1 10
+  cost:
+    - v.iron_ingot(4)
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+
 rifled_barrel_long:
   name: "§7Rifled Barrel (Long)"
   part-type: barrel
   type:
     - rifle
-  item: m.materials.steel_ingot
+  item: modeled.(type=gray_dye;model=16)
+  sounds:
+    - shoot minecraft:guns.musket_2,minecraft:guns.musket_4,minecraft:guns.musket_6
   stats:
     - accuracy 10
     - speed 8
@@ -26,26 +41,48 @@ rifled_barrel_long:
     - ironshot
     - steelshot
   name-impact:
-    - Rifle 1 10 
+    - Rifle 1 10
+  cost:
+    - m.materials.steel_ingot(4)
+  permissions:
+    - musket_maker_2
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier II Component§e]"
+    - ""
+
 smoothbore_barrel_short:
   name: "§7Smoothbore Barrel (Short)"
   part-type: barrel
   type:
     - pistol
-  item: v.iron_ingot
+  item: modeled.(type=gray_dye;model=17)
+  sounds:
+    - shoot minecraft:guns.pistol_1,minecraft:guns.pistol_2,minecraft:guns.pistol_3,minecraft:guns.pistol_4,minecraft:guns.pistol_5
   stats:
     - accuracy 3
     - speed 8
   caliber:
     - ironshot
   name-impact:
-    - Pistol 1 10 
+    - Pistol 1 10
+  cost:
+    - v.iron_ingot(2)
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+
 rifled_barrel_short:
   name: "§7Rifled Barrel (Short)"
   part-type: barrel
   type:
     - pistol
-  item: m.materials.steel_ingot
+  item: modeled.(type=gray_dye;model=18)
+  sounds:
+    - shoot minecraft:guns.pistol_1,minecraft:guns.pistol_2,minecraft:guns.pistol_3,minecraft:guns.pistol_4,minecraft:guns.pistol_5
   stats:
     - accuracy 7
     - speed 7
@@ -54,23 +91,74 @@ rifled_barrel_short:
     - ironshot
     - steelshot
   name-impact:
-    - Pistol 1 10 
+    - Pistol 1 10
+  cost:
+    - m.materials.steel_ingot(2)
+  permissions:
+    - musket_maker_2
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier II Component§e]"
+    - ""
+
 spread_barrel:
   name: "§7Spread Barrel"
   part-type: barrel
   type:
     - shotgun
-  item: m.materials.steel_ingot
+  item: modeled.(type=gray_dye;model=19)
+  sounds:
+    - shoot minecraft:guns.musket_1
   stats:
-    - accuracy -20
-    - speed -5
+    - accuracy -8
+    - reload -10
   caliber:
     - spreadshot
   name-impact:
     - Blunderbuss -1 100
   skin-impact:
-  - blunderbuss 10
-#Loaders
+    - blunderbuss 10
+  cost:
+    - m.materials.steel_ingot(4)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
+
+launcher_barrel:
+  name: "#3a3e4dLauncher Barrel"
+  part-type: barrel
+  type:
+    - launcher
+  item: modeled.(type=gray_dye;model=35)
+  sounds:
+    - shoot gunsandgadgets:launcher_shoot
+    - shoot minecraft:entity.generic.explode
+  stats:
+    - accuracy -6
+    - reload -10
+    - fire_rate 16
+  caliber:
+    - rocket
+  name-impact:
+    - "#3a3e4dRocket 0 100"
+    - "Launcher 1 100"
+  skin-impact:
+    - launcher 10
+  cost:
+    - m.materials.abyssalite_ingot(4)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
+# Loaders
 muzzle_loader:
   name: "§7Muzzle Loader"
   part-type: loader
@@ -78,25 +166,50 @@ muzzle_loader:
     - rifle
     - pistol
     - shotgun
-  item: v.stone
+    - launcher
+  item: modeled.(type=gray_dye;model=20)
+  sounds:
+    - reload gunsandgadgets:muzzle_reload
   stats:
     - fire_rate 2
     - accuracy 4
     - reload 4
     - speed 4
+  cost:
+    - v.stick(2)
+    - v.paper(1)
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+
 breech_loader:
   name: "§7Breech Loader"
   part-type: loader
   type:
     - rifle
     - shotgun
-  item: v.iron_ingot
+    - launcher
+  item: modeled.(type=gray_dye;model=21)
+  sounds:
+    - reload vehicleframework:gun_reload
   stats:
-    - fire_rate 8
+    - fire_rate 5
     - accuracy 2
-    - reload 9
+    - reload 12
     - speed 3
-#Chamber
+  cost:
+    - m.materials.mythril_ingot(1)
+  permissions:
+    - musket_maker_4
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier IV Component§e]"
+    - ""
+
+# Chamber
 single_shot:
   name: "§7Single Shot"
   part-type: chamber
@@ -104,46 +217,112 @@ single_shot:
     - rifle
     - pistol
     - shotgun
-  item: v.iron_ingot
+  item: modeled.(type=gray_dye;model=22)
   stats:
     - capacity 1
     - reload 2
     - accuracy 2
     - speed 3
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+single_shot_launcher:
+  name: "§7Single Shot"
+  part-type: chamber
+  type:
+    - launcher
+  item: modeled.(type=gray_dye;model=37)
+  stats:
+    - capacity 1
+    - reload 4
+    - accuracy 8
+    - speed 4
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
+quad_shot:
+  name: "§7Quad Shot"
+  part-type: chamber
+  type:
+    - launcher
+  item: modeled.(type=gray_dye;model=38)
+  stats:
+    - capacity 4
+    - reload -10
+    - accuracy 2
+    - speed 3
+  cost:
+    - m.materials.abyssalite_ingot(2)
+  permissions:
+    - musket_maker_4
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier IV Component§e]"
+    - ""
+
 revolver:
   name: "§7Revolver"
   part-type: chamber
   type:
     - rifle
     - pistol
-  item: v.iron_ingot
+  item: modeled.(type=gray_dye;model=23)
   stats:
     - capacity 6
-    - fire_rate 6
-    - reload -4
+    - fire_rate 4
+    - reload -12
     - accuracy -1
+    - damage -3
     - speed 1
   name-impact:
     - (Revolver) 2 10
+  cost:
+    - m.materials.abyssalite_ingot(1)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
 
-#Actions
+# Actions
 steamlock:
   name: "§7Steamlock"
   part-type: action
   type:
     - rifle
     - pistol
-  item: v.water_bucket
+  item: modeled.(type=gray_dye;model=24)
+  sound-overrides:
+    - shoot gunsandgadgets:steamlock_shoot
   caliber-override:
     - pebbleshot
   stats:
-    - fire_rate 1
+    - fire_rate 4
     - accuracy 1
     - speed -3
   name-impact:
     - Steamlock 0 10
   skin-impact:
-  - steamlock 10
+    - steamlock 10
+  cost:
+    - v.iron_ingot(2)
+    - v.coal(4)
+    - v.water_bucket(1)
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+
 matchlock:
   name: "§7Matchlock"
   part-type: action
@@ -151,14 +330,27 @@ matchlock:
     - rifle
     - pistol
     - shotgun
-  item: v.string
+  item: modeled.(type=gray_dye;model=25)
   stats:
-    - fire_rate 5
+    - fire_rate 1
     - accuracy 1
   name-impact:
     - Matchlock 0 10
   skin-impact:
-  - matchlock 10
+    - matchlock 10
+    - blunderbuss 1
+    - launcher 1
+  cost:
+    - v.string(4)
+    - v.iron_ingot(2)
+  permissions:
+    - musket_maker_2
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier II Component§e]"
+    - ""
+
 flintlock:
   name: "§7Flintlock"
   part-type: action
@@ -166,68 +358,142 @@ flintlock:
     - rifle
     - pistol
     - shotgun
-  item: v.flint
+  item: modeled.(type=gray_dye;model=26)
+  sounds:
+    - shoot minecraft:item.flintandsteel.use
   stats:
-    - fire_rate 7
+    - fire_rate 2
     - accuracy 2
   name-impact:
     - Flintlock 0 10
   skin-impact:
-  - flintlock 10
+    - flintlock 10
+    - blunderbuss 1
+    - launcher 1
+  cost:
+    - v.flint(2)
+    - m.materials.steel_ingot(2)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
+
+rocketlock:
+  name: "#3a3e4dRocketlock"
+  part-type: action
+  type:
+    - launcher
+  item: modeled.(type=gray_dye;model=36)
+  stats:
+    - fire_rate -10
+    - accuracy 3
+    - reload -6
+  skin-impact:
+    - launcher 10
+  cost:
+    - m.materials.abyssalite_ingot(1)
+    - m.materials.steel_ingot(2)
+    - m.materials.arcane_crystal(4)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""
+
 arclock:
-  name: "§7Expermental Arclock"
+  name: "§7Experimental Arclock"
   part-type: action
   type:
     - rifle
-  item: m.materials.arcane_crystal
+  item: modeled.(type=gray_dye;model=27)
+  sounds:
+    - reload gunsandgadgets:arclock_reload
+    - reload minecraft:block.beacon.activate
+  sound-overrides:
+    - shoot minecraft:guns.musket_1,minecraft:guns.musket_3,minecraft:guns.musket_7,minecraft:guns.musket_8,minecraft:guns.musket_9 
   stats:
-    - fire_rate 8
-    - accuracy 6
+    - fire_rate -12
+    - accuracy 8
     - reload -10
     - speed 8
+  caliber-override:
+    - bronzeshot
   name-impact:
     - §5Arclock 0 10
   skin-impact:
-  - arclock 10
+    - arclock 10
+  cost:
+    - m.materials.abyssalite_ingot(4)
+    - m.materials.arcane_crystal(4)
+  permissions:
+    - musket_maker_4
+  class:
+    - Musketeer
   lore:
+    - "§e[#ebd05bTier IV Component§e]"
+    - ""
     - "§7Unlike the arclocks used in larger weapons like mounted heavy rifles"
     - "§7The experimental handheld arclocks are not able to reproduce the rapid"
     - "§7rate of fire seen in these larger guns. Instead the focus is shifted to"
     - "§7accuracy and speed at great cost of its manual and long reloading process."
 
-#Stocks
-no_stock:
-  name: "§7No Stock"
-  part-type: stock
-  type:
-    - pistol
-  item: v.barrier
-  stats:
-    - accuray -1
+# Stocks
 oak_stock:
   name: "§7Oak Stock"
   part-type: stock
   type:
     - rifle
     - shotgun
-  item: v.oak_planks
+  item: modeled.(type=gray_dye;model=28)
   stats:
-    - accuray 3
+    - accuracy 3
+  cost:
+    - v.oak_planks(4)
+  permissions:
+    - musket_maker_1
+  lore:
+    - "§e[#ebd05bTier I Component§e]"
+    - ""
+
 maplewood_stock:
   name: "§7Maplewood Stock"
   part-type: stock
   type:
     - rifle
     - shotgun
-  item: m.materials.refined_maplewood
+  item: modeled.(type=gray_dye;model=29)
   stats:
-    - accuray 4
+    - accuracy 4
+  cost:
+    - m.materials.refined_maplewood(4)
+  permissions:
+    - musket_maker_2
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier II Component§e]"
+    - ""
+
 elderwood_stock:
-  name: "§7Maplewood Stock"
+  name: "§8Elderwood Stock"
   part-type: stock
   type:
     - rifle
     - shotgun
-  item: m.materials.refined_elderwood
+  item: modeled.(type=gray_dye;model=30)
   stats:
-    - accuray 5
+    - accuracy 5
+  cost:
+    - m.materials.refined_elderwood(4)
+  permissions:
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+    - ""

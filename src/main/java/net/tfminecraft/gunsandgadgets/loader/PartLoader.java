@@ -12,7 +12,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import me.Plugins.TLibs.Interface.LoaderInterface;
+import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
 import net.tfminecraft.gunsandgadgets.guns.parts.GunPart;
+import net.tfminecraft.gunsandgadgets.utils.RevisionTracker;
 
 public class PartLoader implements LoaderInterface{
 	static HashMap<String, GunPart> oList = new HashMap<>();
@@ -44,6 +46,9 @@ public class PartLoader implements LoaderInterface{
 		
 		for(String key : list) {
 			GunPart o = new GunPart(key, config.getConfigurationSection(key));
+			String hash = RevisionTracker.sha256(o.buildRevisionContent());
+			int revision = GunsAndGadgets.getRevisionTracker().resolvePart(key, hash);
+			o.setRevision(revision);
 			oList.put(key, o);
 			ordered.add(o);
 		}
