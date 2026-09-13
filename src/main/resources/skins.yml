@@ -55,3 +55,9 @@ blunderbuss:
   aim: crossbow.16
   types:
     - shotgun
+launcher:
+  carry: stone_hoe.35
+  reload: stone_hoe.36
+  aim: crossbow.24
+  types:
+    - launcher

@@ -1,3 +1,43 @@
-output-slot: 15
+output-slot: 16
 
-output-item: v.stick
+outputs:
+    rifle: m.guns.rifle_template
+    pistol: m.guns.pistol_template
+    shotgun: m.guns.shotgun_template
+    launcher: m.guns.launcher_template
+
+station: iaf(tfmc:gunsmithing_station)
+
+block-damage: false
+rocket-sound: minecraft:block.lava.extinguish
+
+stat_refresh_debug: false
+
+attributes:
+    charisma:
+        accuracy-per-level: 1.0
+        reload-reduction-per-level: 1.0
+
+required-parts:
+    rifle:
+        - barrel
+        - loader
+        - chamber
+        - action
+        - stock
+    pistol:
+        - barrel
+        - loader
+        - chamber
+        - action
+    shotgun:
+        - barrel
+        - loader
+        - chamber
+        - action
+        - stock
+    launcher:
+        - barrel
+        - loader
+        - chamber
+        - action
