@@ -47,7 +47,11 @@ rifled_barrel_long:
   cost:
     - m.materials.steel_ingot(4)
   permissions:
+<<<<<<< HEAD
     - professions.steel_smith
+=======
+    - musket_maker_2
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -70,11 +74,17 @@ smoothbore_barrel_short:
   name-impact:
     - Pistol 1 10
   cost:
+<<<<<<< HEAD
     - v.iron_ingot(4)
   permissions:
     - professions.iron_smith
   class:
     - Musketeer
+=======
+    - v.iron_ingot(2)
+  permissions:
+    - musket_maker_1
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   lore:
     - "§e[#ebd05bTier I Component§e]"
     - ""
@@ -97,9 +107,15 @@ rifled_barrel_short:
   name-impact:
     - Pistol 1 10
   cost:
+<<<<<<< HEAD
     - m.materials.steel_ingot(4)
   permissions:
     - professions.steel_smith
+=======
+    - m.materials.steel_ingot(2)
+  permissions:
+    - musket_maker_2
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -126,11 +142,19 @@ spread_barrel:
   cost:
     - m.materials.steel_ingot(4)
   permissions:
+<<<<<<< HEAD
     - professions.steel_smith
   class:
     - Musketeer
   lore:
     - "§e[#ebd05bTier II Component§e]"
+=======
+    - musket_maker_3
+  class:
+    - Musketeer
+  lore:
+    - "§e[#ebd05bTier III Component§e]"
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
     - ""
 
 launcher_barrel:
@@ -156,7 +180,11 @@ launcher_barrel:
   cost:
     - m.materials.abyssalite_ingot(4)
   permissions:
+<<<<<<< HEAD
     - professions.abyssalite_smith
+=======
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -180,11 +208,18 @@ muzzle_loader:
     - reload 4
     - speed 4
   cost:
+<<<<<<< HEAD
     - v.iron_ingot(2)
   permissions:
     - professions.iron_smith
   class:
     - Musketeer
+=======
+    - v.stick(2)
+    - v.paper(1)
+  permissions:
+    - musket_maker_1
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   lore:
     - "§e[#ebd05bTier I Component§e]"
     - ""
@@ -205,9 +240,15 @@ breech_loader:
     - reload 12
     - speed 3
   cost:
+<<<<<<< HEAD
     - m.materials.mythril_ingot(2)
   permissions:
     - professions.mythril_smith
+=======
+    - m.materials.mythril_ingot(1)
+  permissions:
+    - musket_maker_4
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -228,12 +269,17 @@ single_shot:
     - reload 2
     - accuracy 2
     - speed 3
+<<<<<<< HEAD
   cost:
     - v.iron_ingot(2)
   permissions:
     - professions.iron_smith
   class:
     - Musketeer
+=======
+  permissions:
+    - musket_maker_1
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   lore:
     - "§e[#ebd05bTier I Component§e]"
     - ""
@@ -248,10 +294,15 @@ single_shot_launcher:
     - reload 4
     - accuracy 8
     - speed 4
+<<<<<<< HEAD
   cost:
     - m.materials.abyssalite_ingot(2)
   permissions:
     - professions.abyssalite_smith
+=======
+  permissions:
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -269,9 +320,15 @@ quad_shot:
     - accuracy 2
     - speed 3
   cost:
+<<<<<<< HEAD
     - m.materials.mythril_ingot(2)
   permissions:
     - professions.mythril_smith
+=======
+    - m.materials.abyssalite_ingot(2)
+  permissions:
+    - musket_maker_4
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -295,9 +352,15 @@ revolver:
   name-impact:
     - (Revolver) 2 10
   cost:
+<<<<<<< HEAD
     - m.materials.abyssalite_ingot(2)
   permissions:
     - professions.abyssalite_smith
+=======
+    - m.materials.abyssalite_ingot(1)
+  permissions:
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -326,10 +389,17 @@ steamlock:
     - steamlock 10
   cost:
     - v.iron_ingot(2)
+<<<<<<< HEAD
   permissions:
     - professions.iron_smith
   class:
     - Musketeer
+=======
+    - v.coal(4)
+    - v.water_bucket(1)
+  permissions:
+    - musket_maker_1
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   lore:
     - "§e[#ebd05bTier I Component§e]"
     - ""
@@ -352,9 +422,16 @@ matchlock:
     - blunderbuss 1
     - launcher 1
   cost:
+<<<<<<< HEAD
     - m.materials.steel_ingot(2)
   permissions:
     - professions.steel_smith
+=======
+    - v.string(4)
+    - v.iron_ingot(2)
+  permissions:
+    - musket_maker_2
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -381,9 +458,16 @@ flintlock:
     - blunderbuss 1
     - launcher 1
   cost:
+<<<<<<< HEAD
     - m.materials.abyssalite_ingot(2)
   permissions:
     - professions.abyssalite_smith
+=======
+    - v.flint(2)
+    - m.materials.steel_ingot(2)
+  permissions:
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -403,9 +487,17 @@ rocketlock:
   skin-impact:
     - launcher 10
   cost:
+<<<<<<< HEAD
     - m.materials.abyssalite_ingot(2)
   permissions:
     - professions.abyssalite_smith
+=======
+    - m.materials.abyssalite_ingot(1)
+    - m.materials.steel_ingot(2)
+    - m.materials.arcane_crystal(4)
+  permissions:
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -435,9 +527,16 @@ arclock:
   skin-impact:
     - arclock 10
   cost:
+<<<<<<< HEAD
     - m.materials.mythril_ingot(2)
   permissions:
     - professions.mythril_smith
+=======
+    - m.materials.abyssalite_ingot(4)
+    - m.materials.arcane_crystal(4)
+  permissions:
+    - musket_maker_4
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -459,11 +558,17 @@ oak_stock:
   stats:
     - accuracy 3
   cost:
+<<<<<<< HEAD
     - m.materials.refined_barkwood(2)
   permissions:
     - professions.iron_smith
   class:
     - Musketeer
+=======
+    - v.oak_planks(4)
+  permissions:
+    - musket_maker_1
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   lore:
     - "§e[#ebd05bTier I Component§e]"
     - ""
@@ -478,9 +583,15 @@ maplewood_stock:
   stats:
     - accuracy 4
   cost:
+<<<<<<< HEAD
     - m.materials.refined_maplewood(2)
   permissions:
     - professions.steel_smith
+=======
+    - m.materials.refined_maplewood(4)
+  permissions:
+    - musket_maker_2
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
@@ -497,14 +608,21 @@ elderwood_stock:
   stats:
     - accuracy 5
   cost:
+<<<<<<< HEAD
     - m.materials.refined_elderwood(2)
   permissions:
     - professions.abyssalite_smith
+=======
+    - m.materials.refined_elderwood(4)
+  permissions:
+    - musket_maker_3
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b
   class:
     - Musketeer
   lore:
     - "§e[#ebd05bTier III Component§e]"
     - ""
+<<<<<<< HEAD
 
 demonwood_stock:
   name: "§4Demonwood Stock"
@@ -524,3 +642,5 @@ demonwood_stock:
   lore:
     - "§e[#ebd05bTier IV Component§e]"
     - ""
+=======
+>>>>>>> 4d186d2580c4551fffeba11ab065bb2344d0907b

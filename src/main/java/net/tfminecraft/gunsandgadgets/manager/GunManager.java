@@ -9,6 +9,7 @@ import net.tfminecraft.gunsandgadgets.GunsAndGadgets;
 import net.tfminecraft.gunsandgadgets.attributes.AttributeReader;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
 import net.tfminecraft.gunsandgadgets.guns.parts.GunPart;
+import net.tfminecraft.gunsandgadgets.guns.data.GunCraftProvenance;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinData;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinState;
 import net.tfminecraft.gunsandgadgets.guns.stats.StatCalculator;
@@ -17,6 +18,7 @@ import net.tfminecraft.gunsandgadgets.loader.SkinLoader;
 import net.tfminecraft.gunsandgadgets.shooter.ProjectileShooter;
 import net.tfminecraft.gunsandgadgets.util.Caliber;
 import net.tfminecraft.gunsandgadgets.util.SoundPlayer;
+import net.tfminecraft.gunsandgadgets.utils.GunBrokenMarker;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -136,6 +139,10 @@ public class GunManager implements Listener {
         }
         String gunId = meta.getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
         if (gunId == null) {
+            return;
+        }
+        if (blockIfBroken(player, item)) {
+            event.setCancelled(true);
             return;
         }
         event.setCancelled(true);
@@ -445,6 +452,41 @@ public class GunManager implements Listener {
                 }
             }
         }
+
+        Bukkit.getScheduler().runTask(GunsAndGadgets.getInstance(), () -> {
+            ItemStack held = player.getInventory().getItem(event.getNewSlot());
+            if (held == null || !held.hasItemMeta()) {
+                return;
+            }
+            String heldGunId = held.getItemMeta().getPersistentDataContainer().get(gunKey, PersistentDataType.STRING);
+            if (heldGunId == null) {
+                return;
+            }
+            if (blockIfBroken(player, held)) {
+                player.getInventory().setItem(event.getNewSlot(), held);
+            }
+        });
+    }
+
+    private boolean blockIfBroken(Player player, ItemStack item) {
+        if (GunBrokenMarker.isBroken(item)) {
+            return true;
+        }
+        GunCraftProvenance provenance = GunCraftProvenance.readFrom(item);
+        if (provenance == null) {
+            return false;
+        }
+        GunCraftProvenance.ResolvedParts resolved = provenance.resolveStampedParts();
+        if (resolved.missingIds().isEmpty()) {
+            return false;
+        }
+        ItemMeta brokenMeta = item.getItemMeta();
+        String gunId = brokenMeta != null
+                ? brokenMeta.getPersistentDataContainer().get(gunKey, PersistentDataType.STRING)
+                : null;
+        GunBrokenMarker.markBroken(item, resolved.missingIds());
+        GunBrokenMarker.notifyBroken(player, item, gunId, resolved.missingIds());
+        return true;
     }
 
     

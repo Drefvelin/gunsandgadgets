@@ -39,6 +39,7 @@ import net.tfminecraft.gunsandgadgets.cache.Cache;
 import net.tfminecraft.gunsandgadgets.guns.GunType;
 import net.tfminecraft.gunsandgadgets.guns.SoundType;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
+import net.tfminecraft.gunsandgadgets.guns.data.GunCraftProvenance;
 import net.tfminecraft.gunsandgadgets.guns.parts.GunPart;
 import net.tfminecraft.gunsandgadgets.guns.parts.PartData;
 import net.tfminecraft.gunsandgadgets.guns.skins.SkinData;
@@ -51,6 +52,7 @@ import net.tfminecraft.gunsandgadgets.loader.PartDataLoader;
 import net.tfminecraft.gunsandgadgets.loader.PartLoader;
 import net.tfminecraft.gunsandgadgets.loader.SkinLoader;
 import net.tfminecraft.gunsandgadgets.util.CostFormatter;
+import net.tfminecraft.gunsandgadgets.utils.GunBrokenMarker;
 public class InventoryManager implements Listener {
 
     // ---------- OPEN ASSEMBLY (uses per-player selections if valid, else first) ----------
@@ -122,6 +124,7 @@ public class InventoryManager implements Listener {
         for (GunPart part : PartLoader.getOrdered()) {
             if (!part.getPartType().getId().equalsIgnoreCase(partCategoryId)) continue;
             if (!part.getGunTypes().contains(chosen)) continue;
+            if (part.isDisabled()) continue;
             if (!hasPermissionForPart(player, part)) continue; // 🚫 permission check
             options.add(part);
         }
@@ -165,7 +168,8 @@ public class InventoryManager implements Listener {
         String selectedKey = SelectedPartsManager.get(player, partCategoryId);
         if (selectedKey != null) {
             GunPart gp = getPartByKey(selectedKey);
-            if (gp != null && gp.getGunTypes().contains(chosen) && hasPermissionForPart(player, gp)) {
+            if (gp != null && gp.getGunTypes().contains(chosen) && hasPermissionForPart(player, gp)
+                    && gp.isEnabledForCrafting()) {
                 return gp;
             }
         }
@@ -189,6 +193,7 @@ public class InventoryManager implements Listener {
         for (GunPart part : PartLoader.getOrdered()) {
             if (!part.getGunTypes().contains(chosen)) continue;
             if (!part.getPartType().getId().equalsIgnoreCase(id)) continue;
+            if (part.isDisabled()) continue;
             if (!hasPermissionForPart(player, part)) continue;
             return part;
         }
@@ -329,6 +334,25 @@ public class InventoryManager implements Listener {
 
 
     public ItemStack createOutputItem(GunType type, Collection<GunPart> parts, boolean gui) {
+        return createOutputItem(type, parts, gui, null);
+    }
+
+    public ItemStack rebuildFromParts(ItemStack existing, GunType type, Collection<GunPart> parts) {
+        return createOutputItem(type, parts, false, existing);
+    }
+
+    public ItemStack createOutputItem(GunType type, Collection<GunPart> parts, boolean gui, ItemStack preserveRuntime) {
+        for (GunPart part : parts) {
+            if (part.isDisabled()) {
+                ItemStack barrier = new ItemStack(Material.BARRIER);
+                ItemMeta bm = barrier.getItemMeta();
+                if (bm != null) {
+                    bm.setDisplayName("§cPart no longer available");
+                    barrier.setItemMeta(bm);
+                }
+                return barrier;
+            }
+        }
         List<String> required = Cache.requiredParts.get(type);
         if (required != null) {
             for (String req : required) {
@@ -384,15 +408,30 @@ public class InventoryManager implements Listener {
             pdc.set(skinKey, PersistentDataType.STRING, skin.getId());
 
             NamespacedKey gunKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_id");
-            pdc.set(gunKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+            NamespacedKey saltKey = new NamespacedKey(GunsAndGadgets.getInstance(), "accuracy_salt");
+            if (preserveRuntime != null && preserveRuntime.hasItemMeta()) {
+                PersistentDataContainer preservePdc = preserveRuntime.getItemMeta().getPersistentDataContainer();
+                String existingGunId = preservePdc.get(gunKey, PersistentDataType.STRING);
+                if (existingGunId != null) {
+                    pdc.set(gunKey, PersistentDataType.STRING, existingGunId);
+                } else {
+                    pdc.set(gunKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+                }
+                Integer existingSalt = preservePdc.get(saltKey, PersistentDataType.INTEGER);
+                if (existingSalt != null) {
+                    pdc.set(saltKey, PersistentDataType.INTEGER, existingSalt);
+                } else {
+                    pdc.set(saltKey, PersistentDataType.INTEGER, ThreadLocalRandom.current().nextInt(0, 10000));
+                }
+            } else {
+                pdc.set(gunKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+                pdc.set(saltKey, PersistentDataType.INTEGER, ThreadLocalRandom.current().nextInt(0, 10000));
+            }
 
             NamespacedKey typeKey = new NamespacedKey(GunsAndGadgets.getInstance(), "gun_type");
             pdc.set(typeKey, PersistentDataType.STRING, type.toString());
 
-            // ✅ Store accuracy salt
-            NamespacedKey saltKey = new NamespacedKey(GunsAndGadgets.getInstance(), "accuracy_salt");
-            int salt = ThreadLocalRandom.current().nextInt(0, 10000);
-            pdc.set(saltKey, PersistentDataType.INTEGER, salt);
+            // ✅ Store accuracy salt — set above with gun_id when preserving runtime
 
             // ---------- Caliber section ----------
             List<String> calibers = resolveCalibers(parts);
@@ -433,7 +472,69 @@ public class InventoryManager implements Listener {
         boolean twoHanded = parts.stream().anyMatch(GunPart::isTwoHanded);
         if (twoHanded) base = makeTwoHanded(base);
 
+        if (preserveRuntime != null) {
+            copyRuntimeAmmoPdc(preserveRuntime, base);
+        }
+
+        if (!gui) {
+            GunCraftProvenance.from(parts).applyTo(base);
+            GunBrokenMarker.clearBroken(base);
+        }
+
         return base;
+    }
+
+    private void copyRuntimeAmmoPdc(ItemStack from, ItemStack to) {
+        if (from == null || to == null || !from.hasItemMeta() || !to.hasItemMeta()) {
+            return;
+        }
+        ItemMeta fromMeta = from.getItemMeta();
+        ItemMeta toMeta = to.getItemMeta();
+        PersistentDataContainer fromPdc = fromMeta.getPersistentDataContainer();
+        PersistentDataContainer toPdc = toMeta.getPersistentDataContainer();
+
+        NamespacedKey bulletsKey = new NamespacedKey(GunsAndGadgets.getInstance(), "bullets_loaded");
+        NamespacedKey loadedAmmoKey = new NamespacedKey(GunsAndGadgets.getInstance(), "ammo_loaded");
+        NamespacedKey reloadAmmoKey = new NamespacedKey(GunsAndGadgets.getInstance(), "reload_ammo");
+        NamespacedKey reloadAmountKey = new NamespacedKey(GunsAndGadgets.getInstance(), "reload_amount");
+        NamespacedKey lastFireKey = new NamespacedKey(GunsAndGadgets.getInstance(), "last_fire");
+
+        if (fromPdc.has(bulletsKey, PersistentDataType.INTEGER)) {
+            toPdc.set(bulletsKey, PersistentDataType.INTEGER,
+                    fromPdc.getOrDefault(bulletsKey, PersistentDataType.INTEGER, 0));
+        } else {
+            toPdc.remove(bulletsKey);
+        }
+
+        String loadedAmmo = fromPdc.get(loadedAmmoKey, PersistentDataType.STRING);
+        if (loadedAmmo != null) {
+            toPdc.set(loadedAmmoKey, PersistentDataType.STRING, loadedAmmo);
+        } else {
+            toPdc.remove(loadedAmmoKey);
+        }
+
+        String reloadAmmo = fromPdc.get(reloadAmmoKey, PersistentDataType.STRING);
+        if (reloadAmmo != null) {
+            toPdc.set(reloadAmmoKey, PersistentDataType.STRING, reloadAmmo);
+        } else {
+            toPdc.remove(reloadAmmoKey);
+        }
+
+        if (fromPdc.has(reloadAmountKey, PersistentDataType.INTEGER)) {
+            toPdc.set(reloadAmountKey, PersistentDataType.INTEGER,
+                    fromPdc.getOrDefault(reloadAmountKey, PersistentDataType.INTEGER, 0));
+        } else {
+            toPdc.remove(reloadAmountKey);
+        }
+
+        if (fromPdc.has(lastFireKey, PersistentDataType.LONG)) {
+            toPdc.set(lastFireKey, PersistentDataType.LONG,
+                    fromPdc.getOrDefault(lastFireKey, PersistentDataType.LONG, 0L));
+        } else {
+            toPdc.remove(lastFireKey);
+        }
+
+        to.setItemMeta(toMeta);
     }
 
     /**

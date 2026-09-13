@@ -13,10 +13,13 @@ import net.tfminecraft.gunsandgadgets.loader.SkinLoader;
 import net.tfminecraft.gunsandgadgets.manager.CraftingManager;
 import net.tfminecraft.gunsandgadgets.manager.GgCommand;
 import net.tfminecraft.gunsandgadgets.manager.GunManager;
+import net.tfminecraft.gunsandgadgets.manager.GunRefreshListener;
 import net.tfminecraft.gunsandgadgets.manager.inventory.InventoryManager;
+import net.tfminecraft.gunsandgadgets.utils.RevisionTracker;
 
 public class GunsAndGadgets extends JavaPlugin {
 	private static GunsAndGadgets instance;
+	private static final RevisionTracker revisionTracker = new RevisionTracker();
 	private final ConfigLoader configLoader = new ConfigLoader();
 	private final PartLoader partLoader = new PartLoader();
 	private final PartDataLoader partDataLoader = new PartDataLoader();
@@ -31,6 +34,7 @@ public class GunsAndGadgets extends JavaPlugin {
 		instance = this;
 		gunManager = new GunManager();
 		createConfigs();
+		revisionTracker.load(getDataFolder());
 		loadConfigs();
 		registerListeners();
 		registerCommands();
@@ -38,12 +42,14 @@ public class GunsAndGadgets extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		revisionTracker.flush();
 	}
 
 	public void registerListeners() {
 		getServer().getPluginManager().registerEvents(craftingManager, this);
 		getServer().getPluginManager().registerEvents(new InventoryManager(), this);
 		getServer().getPluginManager().registerEvents(gunManager, this);
+		getServer().getPluginManager().registerEvents(new GunRefreshListener(), this);
 	}
 
 	public void registerCommands() {
@@ -62,6 +68,10 @@ public class GunsAndGadgets extends JavaPlugin {
 	}
 
 	public void createConfigs() {
+		if (!getDataFolder().exists()) {
+			getDataFolder().mkdirs();
+		}
+		new File(getDataFolder(), "data").mkdirs();
 		String[] files = {
 			"config.yml",
 			"part-types.yml",
@@ -89,7 +99,12 @@ public class GunsAndGadgets extends JavaPlugin {
 	/** Reload all YAML configs from disk (including skins.yml). */
 	public void reload() {
 		loadConfigs();
+		revisionTracker.flush();
 		getLogger().info("Reloaded configs (skins, parts, ammunition, config).");
+	}
+
+	public static RevisionTracker getRevisionTracker() {
+		return revisionTracker;
 	}
 
 	public GunManager getGunManager() {

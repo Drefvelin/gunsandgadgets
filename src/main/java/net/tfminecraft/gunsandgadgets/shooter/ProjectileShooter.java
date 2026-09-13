@@ -10,6 +10,7 @@ import net.tfminecraft.gunsandgadgets.cache.Cache;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition;
 import net.tfminecraft.gunsandgadgets.guns.ammunition.Ammunition.AmmoOption;
 import net.tfminecraft.gunsandgadgets.guns.stats.StatCalculator;
+import net.tfminecraft.gunsandgadgets.util.ImpactVfx;
 import net.tfminecraft.gunsandgadgets.util.SoundPlayer;
 
 import org.bukkit.Bukkit;
@@ -412,12 +413,14 @@ public class ProjectileShooter {
             if (!ammo.hasOption(AmmoOption.ROCKET) && isBulletPassable(block)) {
 
                 if (block.getType().name().contains("GLASS")) {
-                    world.playSound(current, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
-                    world.spawnParticle(
+                    Location glassHit = ImpactVfx.onBlockSurface(current, direction, block);
+                    world.playSound(glassHit, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
+                    ImpactVfx.spawn(
+                            glassHit,
                             Particle.BLOCK,
-                            current,
                             10,
                             0.1, 0.1, 0.1,
+                            0,
                             block.getBlockData()
                     );
                 }
@@ -435,16 +438,16 @@ public class ProjectileShooter {
                 explode(player, current, damage, pierceStat, ticks);
             } else {
                 drawLine(ammo, from.clone(), current, 256);
-                world.spawnParticle(
+                Location impact = ImpactVfx.onBlockSurface(current, direction, block);
+                ImpactVfx.spawn(
+                        impact,
                         Particle.EXPLOSION,
-                        current,
                         2,
                         0.2, 0.2, 0.2,
                         0,
-                        null,
-                        true
+                        null
                 );
-                world.playSound(current, Sound.BLOCK_STONE_BREAK, 1f, 2f);
+                world.playSound(impact, Sound.BLOCK_STONE_BREAK, 1f, 2f);
             }
 
             return true;

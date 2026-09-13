@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import me.Plugins.TLibs.TLibs;
@@ -35,9 +36,11 @@ public class CraftingManager implements Listener {
     @EventHandler
     public void onStationOpen(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
         if (event.getClickedBlock() == null) return;
 
         if(!TLibs.getBlockAPI().getChecker().checkBlock(event.getClickedBlock(), Cache.station)) return;
+        if (event.getPlayer().isSneaking()) return;
         event.setCancelled(true);
         Player player = event.getPlayer();
         inv.openCraftingInventory(player);
@@ -61,8 +64,12 @@ public class CraftingManager implements Listener {
 
             // Collect parts again (based on player’s selections)
             GunType chosenType = TypeSelectionManager.getSelectedType(player);
-            Collection<GunPart> parts = inv.collectPartsForPlayer(player, chosenType); 
-            // ⬆️ implement a helper to re-collect GunParts same way as when previewing
+            Collection<GunPart> parts = inv.collectPartsForPlayer(player, chosenType);
+            if (hasDisabledPart(parts)) {
+                player.sendMessage("§cOne or more parts are no longer available for crafting.");
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return;
+            }
             // Check for class conflicts before crafting
             if (inv.hasClassConflict(player, parts)) {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
@@ -147,5 +154,14 @@ public class CraftingManager implements Listener {
         }
 
         p.updateInventory();
+    }
+
+    private boolean hasDisabledPart(Collection<GunPart> parts) {
+        for (GunPart part : parts) {
+            if (part.isDisabled()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

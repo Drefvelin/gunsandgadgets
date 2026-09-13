@@ -49,6 +49,7 @@ public class ConfigLoader {
 
         Cache.blockDamage = config.getBoolean("block-damage", false);
         Cache.rocketSound = config.getString("rocket-sound", "none");
+        Cache.statRefreshDebug = config.getBoolean("stat_refresh_debug", false);
 
         section = config.getConfigurationSection("required-parts");
         if (section != null) {

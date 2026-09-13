@@ -33,9 +33,13 @@ public class GunPart {
     private List<String> permissions = new ArrayList<>();
     private List<String> classRequirements = new ArrayList<>();
 
+    private int revision = 0;
+    private final boolean disabled;
+
     public GunPart(String key, ConfigurationSection config) {
         this.id = key;
         this.name = StringFormatter.formatHex(config.getString("name", key));
+        this.disabled = config.getBoolean("disabled", false);
 
         PartData data = PartDataLoader.getByString(config.getString("part-type", "barrel"));
         if (data != null) partType = data;
@@ -196,6 +200,96 @@ public class GunPart {
     public List<String> getPermissions() { return permissions; }
     public List<String> getClassRequirements() { return classRequirements; }
     public boolean isTwoHanded() { return isTwoHanded; }
+
+    public int getRevision() { return revision; }
+
+    public void setRevision(int revision) { this.revision = revision; }
+
+    public boolean isDisabled() { return disabled; }
+
+    public boolean isEnabledForCrafting() { return !disabled; }
+
+    /**
+     * Canonical gameplay content for revision hashing. Excludes name, lore, permissions, disabled.
+     */
+    public String buildRevisionContent() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("item=").append(itemKey).append(';');
+        sb.append("two-handed=").append(isTwoHanded).append(';');
+        sb.append("part-type=").append(partType != null ? partType.getId() : "").append(';');
+
+        List<String> types = gunTypes.stream()
+                .map(GunType::name)
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        sb.append("types=").append(String.join(",", types)).append(';');
+
+        List<String> statParts = stats.entrySet().stream()
+                .map(e -> e.getKey().getKey() + "(" + e.getValue() + ")")
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        sb.append("stats=").append(String.join(",", statParts)).append(';');
+
+        List<String> costParts = cost.entrySet().stream()
+                .map(e -> e.getKey() + "(" + e.getValue() + ")")
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        sb.append("cost=").append(String.join(",", costParts)).append(';');
+
+        List<String> caliberCopy = new ArrayList<>(calibers);
+        Collections.sort(caliberCopy, String.CASE_INSENSITIVE_ORDER);
+        sb.append("caliber=").append(String.join(",", caliberCopy)).append(';');
+
+        if (caliberOverrides != null) {
+            List<String> overrideCopy = new ArrayList<>(caliberOverrides);
+            Collections.sort(overrideCopy, String.CASE_INSENSITIVE_ORDER);
+            sb.append("caliber-override=").append(String.join(",", overrideCopy)).append(';');
+        }
+
+        List<String> classCopy = new ArrayList<>(classRequirements);
+        Collections.sort(classCopy, String.CASE_INSENSITIVE_ORDER);
+        sb.append("class=").append(String.join(",", classCopy)).append(';');
+
+        sb.append("name-impact=").append(buildNameImpactContent()).append(';');
+        sb.append("skin-impact=").append(buildSkinImpactContent()).append(';');
+        sb.append("sounds=").append(buildSoundContent(sounds)).append(';');
+        sb.append("sound-overrides=").append(buildSoundContent(soundOverrides));
+        return sb.toString();
+    }
+
+    private String buildNameImpactContent() {
+        List<String> parts = nameImpacts.stream()
+                .map(ni -> ni.getIndex() + ":" + ni.getWeight() + ":" + ni.getFragment())
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        return String.join(",", parts);
+    }
+
+    private String buildSkinImpactContent() {
+        List<String> parts = skinImpacts.stream()
+                .map(si -> si.getSkinId() + ":" + si.getWeight())
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        return String.join(",", parts);
+    }
+
+    private String buildSoundContent(Map<SoundType, List<PartSound>> source) {
+        List<String> parts = new ArrayList<>();
+        for (SoundType type : EnumSet.allOf(SoundType.class)) {
+            List<PartSound> list = source.get(type);
+            if (list == null) {
+                continue;
+            }
+            for (PartSound sound : list) {
+                String gunType = sound.getRequiredType() != null ? sound.getRequiredType().name() : "";
+                List<String> keys = new ArrayList<>(sound.getSoundKeys());
+                Collections.sort(keys, String.CASE_INSENSITIVE_ORDER);
+                parts.add(type.name() + ":" + gunType + ":" + String.join("|", keys));
+            }
+        }
+        Collections.sort(parts, String.CASE_INSENSITIVE_ORDER);
+        return String.join(",", parts);
+    }
 
     // Inner class for name-impact
     public static class NameImpact {
