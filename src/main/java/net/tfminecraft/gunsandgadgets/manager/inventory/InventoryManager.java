@@ -53,6 +53,9 @@ import net.tfminecraft.gunsandgadgets.loader.PartLoader;
 import net.tfminecraft.gunsandgadgets.loader.SkinLoader;
 import net.tfminecraft.gunsandgadgets.util.CostFormatter;
 import net.tfminecraft.gunsandgadgets.utils.GunBrokenMarker;
+import net.tfminecraft.gunsandgadgets.utils.MajorityTierResolver;
+import net.tfminecraft.gunsandgadgets.utils.TierLore;
+
 public class InventoryManager implements Listener {
 
     // ---------- OPEN ASSEMBLY (uses per-player selections if valid, else first) ----------
@@ -467,6 +470,10 @@ public class InventoryManager implements Listener {
 
             // Apply stats afterwards (so lore & stat PDCs get written)
             base = StatApplier.apply(base, parts, gui);
+            int majority = MajorityTierResolver.resolve(parts);
+            if (majority > 0) {
+                TierLore.applyTo(base, majority);
+            }
         }
 
         boolean twoHanded = parts.stream().anyMatch(GunPart::isTwoHanded);
@@ -635,7 +642,13 @@ public class InventoryManager implements Listener {
         // Lore
         List<String> lore = new ArrayList<>();
 
-        // Existing lore from config (if any)
+        if (part.hasTier()) {
+            lore.add(TierLore.formatComponentLine(part.getTier()));
+            if (part.getLore() != null && !part.getLore().isEmpty()) {
+                lore.add("");
+            }
+        }
+
         if (part.getLore() != null && !part.getLore().isEmpty()) {
             for (String line : part.getLore()) {
                 lore.add(StringFormatter.formatHex(line));

@@ -35,11 +35,13 @@ public class GunPart {
 
     private int revision = 0;
     private final boolean disabled;
+    private final int tier;
 
     public GunPart(String key, ConfigurationSection config) {
         this.id = key;
         this.name = StringFormatter.formatHex(config.getString("name", key));
         this.disabled = config.getBoolean("disabled", false);
+        this.tier = config.getInt("tier", 0);
 
         PartData data = PartDataLoader.getByString(config.getString("part-type", "barrel"));
         if (data != null) partType = data;
@@ -209,6 +211,10 @@ public class GunPart {
 
     public boolean isEnabledForCrafting() { return !disabled; }
 
+    public int getTier() { return tier; }
+
+    public boolean hasTier() { return tier > 0; }
+
     /**
      * Canonical gameplay content for revision hashing. Excludes name, lore, permissions, disabled.
      */
@@ -217,6 +223,7 @@ public class GunPart {
         sb.append("item=").append(itemKey).append(';');
         sb.append("two-handed=").append(isTwoHanded).append(';');
         sb.append("part-type=").append(partType != null ? partType.getId() : "").append(';');
+        sb.append("tier=").append(tier).append(';');
 
         List<String> types = gunTypes.stream()
                 .map(GunType::name)

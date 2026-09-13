@@ -54,7 +54,7 @@ When `InventoryManager.createOutputItem(..., gui=false)` completes a real craft:
 
 - `GunCraftProvenance.from(parts).applyTo(item)` writes `gg_craft_parts` (JSON list of part id + revision) and `gg_parts_revision` (max revision).
 - `GunBrokenMarker.clearBroken(item)` clears any prior broken flag.
-- Assembly **preview** (`gui=true`) does **not** stamp provenance.
+- Assembly **preview** (`gui=true`) does **not** stamp provenance. Preview **and** craft stamp majority tier lore (`Tier II`) plus `gg_majority_tier` / `gg_tier_lore_start`.
 
 Revisions come from `GunPart.getRevision()` assigned by `RevisionTracker` on load.
 
@@ -65,14 +65,14 @@ Revisions come from `GunPart.getRevision()` assigned by `RevisionTracker` on loa
 - File: `data/revisions.json` with `parts` section
 - On `PartLoader.load()`: `GunPart.buildRevisionContent()` hashed -> `RevisionTracker.resolvePart(id, hash)`
 - Loaded on enable, flushed on disable and `/gg reload`
-- Revisions auto-bump when gameplay yaml content changes (stats, cost, calibers, sounds, skin impacts, etc.)
-- **Not** bumped by: part `name`, `lore`, `permissions`, or `disabled`
+- Revisions auto-bump when gameplay yaml content changes (stats, cost, calibers, sounds, skin impacts, `tier`, etc.)
+- **Not** bumped by: part `name`, `lore`, `permissions`, or `disabled`. `tier` **does** bump revision; lore-only flavor edits still do not.
 
 ### GunCraftProvenance
 
 - `guns/data/GGCraftPart.java` - stamped part id + revision (`id`, `r` in JSON)
 - `guns/data/GunCraftProvenance.java` - read/write PDC, `resolveStampedParts()`, `isOutdated()`, `syncRevisions()`
-- PDC keys via `utils/GGCraftKeys.java`: `gg_craft_parts`, `gg_parts_revision`, `gg_broken`
+- PDC keys via `utils/GGCraftKeys.java`: `gg_craft_parts`, `gg_parts_revision`, `gg_broken`, `gg_majority_tier`, `gg_tier_lore_start`
 - Stamped on craft in `InventoryManager.createOutputItem` when `!gui`
 
 Crafted guns use these runtime keys plus provenance when crafted:
@@ -88,6 +88,8 @@ Crafted guns use these runtime keys plus provenance when crafted:
 | `stat_value_*` / `stat_index_*` | Aggregated stat totals + lore indices |
 | `gg_craft_parts` | Stamped part list (craft only) |
 | `gg_parts_revision` | Max stamped part revision |
+| `gg_majority_tier` | Majority part tier (preview and craft) |
+| `gg_tier_lore_start` | Lore index of the `Tier II` line |
 | `bullets_loaded` / `ammo_loaded` | Runtime ammo (preserved on refresh) |
 | `reload_ammo` / `reload_amount` | Mid-reload cancel state |
 | `last_fire` | Last fire timestamp |

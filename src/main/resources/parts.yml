@@ -5,6 +5,7 @@
 smoothbore_barrel_long:
   name: "§7Smoothbore Barrel (Long)"
   part-type: barrel
+  tier: 1
   type:
     - rifle
   item: modeled.(type=gray_dye;model=15)
@@ -23,13 +24,11 @@ smoothbore_barrel_long:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 
 rifled_barrel_long:
   name: "§7Rifled Barrel (Long)"
   part-type: barrel
+  tier: 2
   type:
     - rifle
   item: modeled.(type=gray_dye;model=16)
@@ -50,13 +49,11 @@ rifled_barrel_long:
     - professions.steel_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier II Component§e]"
-    - ""
 
 smoothbore_barrel_short:
   name: "§7Smoothbore Barrel (Short)"
   part-type: barrel
+  tier: 1
   type:
     - pistol
   item: modeled.(type=gray_dye;model=17)
@@ -75,13 +72,11 @@ smoothbore_barrel_short:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 
 rifled_barrel_short:
   name: "§7Rifled Barrel (Short)"
   part-type: barrel
+  tier: 2
   type:
     - pistol
   item: modeled.(type=gray_dye;model=18)
@@ -102,13 +97,11 @@ rifled_barrel_short:
     - professions.steel_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier II Component§e]"
-    - ""
 
 spread_barrel:
   name: "§7Spread Barrel"
   part-type: barrel
+  tier: 2
   type:
     - shotgun
   item: modeled.(type=gray_dye;model=19)
@@ -129,13 +122,11 @@ spread_barrel:
     - professions.steel_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier II Component§e]"
-    - ""
 
 launcher_barrel:
   name: "#3a3e4dLauncher Barrel"
   part-type: barrel
+  tier: 3
   type:
     - launcher
   item: modeled.(type=gray_dye;model=35)
@@ -159,13 +150,11 @@ launcher_barrel:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 # Loaders
 muzzle_loader:
   name: "§7Muzzle Loader"
   part-type: loader
+  tier: 1
   type:
     - rifle
     - pistol
@@ -185,13 +174,11 @@ muzzle_loader:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 
 breech_loader:
   name: "§7Breech Loader"
   part-type: loader
+  tier: 4
   type:
     - rifle
     - shotgun
@@ -210,14 +197,12 @@ breech_loader:
     - professions.mythril_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier IV Component§e]"
-    - ""
 
 # Chamber
 single_shot:
   name: "§7Single Shot"
   part-type: chamber
+  tier: 1
   type:
     - rifle
     - pistol
@@ -234,12 +219,10 @@ single_shot:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 single_shot_launcher:
   name: "§7Single Shot"
   part-type: chamber
+  tier: 3
   type:
     - launcher
   item: modeled.(type=gray_dye;model=37)
@@ -254,12 +237,10 @@ single_shot_launcher:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 quad_shot:
   name: "§7Quad Shot"
   part-type: chamber
+  tier: 4
   type:
     - launcher
   item: modeled.(type=gray_dye;model=38)
@@ -274,13 +255,11 @@ quad_shot:
     - professions.mythril_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier IV Component§e]"
-    - ""
 
 revolver:
   name: "§7Revolver"
   part-type: chamber
+  tier: 3
   type:
     - rifle
     - pistol
@@ -300,14 +279,12 @@ revolver:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 
 # Actions
 steamlock:
   name: "§7Steamlock"
   part-type: action
+  tier: 1
   type:
     - rifle
     - pistol
@@ -330,13 +307,11 @@ steamlock:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 
 matchlock:
   name: "§7Matchlock"
   part-type: action
+  tier: 2
   type:
     - rifle
     - pistol
@@ -357,13 +332,11 @@ matchlock:
     - professions.steel_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier II Component§e]"
-    - ""
 
 flintlock:
   name: "§7Flintlock"
   part-type: action
+  tier: 3
   type:
     - rifle
     - pistol
@@ -386,13 +359,11 @@ flintlock:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 
 rocketlock:
   name: "#3a3e4dRocketlock"
   part-type: action
+  tier: 3
   type:
     - launcher
   item: modeled.(type=gray_dye;model=36)
@@ -408,13 +379,11 @@ rocketlock:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 
 arclock:
   name: "§7Experimental Arclock"
   part-type: action
+  tier: 4
   type:
     - rifle
   item: modeled.(type=gray_dye;model=27)
@@ -441,8 +410,6 @@ arclock:
   class:
     - Musketeer
   lore:
-    - "§e[#ebd05bTier IV Component§e]"
-    - ""
     - "§7Unlike the arclocks used in larger weapons like mounted heavy rifles"
     - "§7The experimental handheld arclocks are not able to reproduce the rapid"
     - "§7rate of fire seen in these larger guns. Instead the focus is shifted to"
@@ -452,6 +419,7 @@ arclock:
 oak_stock:
   name: "§7Oak Stock"
   part-type: stock
+  tier: 1
   type:
     - rifle
     - shotgun
@@ -464,13 +432,11 @@ oak_stock:
     - professions.iron_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier I Component§e]"
-    - ""
 
 maplewood_stock:
   name: "§7Maplewood Stock"
   part-type: stock
+  tier: 2
   type:
     - rifle
     - shotgun
@@ -483,13 +449,11 @@ maplewood_stock:
     - professions.steel_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier II Component§e]"
-    - ""
 
 elderwood_stock:
   name: "§8Elderwood Stock"
   part-type: stock
+  tier: 3
   type:
     - rifle
     - shotgun
@@ -502,13 +466,11 @@ elderwood_stock:
     - professions.abyssalite_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier III Component§e]"
-    - ""
 
 demonwood_stock:
   name: "§4Demonwood Stock"
   part-type: stock
+  tier: 4
   type:
     - rifle
     - shotgun
@@ -521,6 +483,3 @@ demonwood_stock:
     - professions.mythril_smith
   class:
     - Musketeer
-  lore:
-    - "§e[#ebd05bTier IV Component§e]"
-    - ""

@@ -24,6 +24,14 @@ public final class GGCraftKeys {
         return new NamespacedKey(GunsAndGadgets.getInstance(), "gg_broken");
     }
 
+    public static NamespacedKey majorityTier() {
+        return new NamespacedKey(GunsAndGadgets.getInstance(), "gg_majority_tier");
+    }
+
+    public static NamespacedKey tierLoreStart() {
+        return new NamespacedKey(GunsAndGadgets.getInstance(), "gg_tier_lore_start");
+    }
+
     public static final PersistentDataType<String, String> STRING = PersistentDataType.STRING;
     public static final PersistentDataType<Integer, Integer> INTEGER = PersistentDataType.INTEGER;
     public static final PersistentDataType<Byte, Boolean> BOOLEAN = PersistentDataType.BOOLEAN;
